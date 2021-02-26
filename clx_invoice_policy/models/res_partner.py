@@ -131,6 +131,32 @@ class Partner(models.Model):
                     base_lines[line['description']]['subscription_lines_ids'].extend(line['subscription_lines_ids'])
         return base_lines
 
+    def add_discount_line(self, invoice_line_ids):
+        total_discount = 0.0
+        discount_line = invoice_line_ids[0][-1].copy()
+        for inv_val in invoice_line_ids:
+            if self.management_company_type_id:
+                flat_discount = self.management_company_type_id.flat_discount
+                if self.management_company_type_id.clx_category_id and inv_val[-1][
+                    'category_id'] == self.management_company_type_id.clx_category_id.id:
+                    total_discount += flat_discount
+                else:
+                    total_discount += (inv_val[-1][
+                                           'price_unit'] * self.management_company_type_id.discount_on_order_line) / 100
+        if total_discount:
+            discount_line.update({'price_unit': -abs(total_discount),
+                                  'category_id': False,
+                                  'product_uom_id': False,
+                                  'subscription_id': False,
+                                  'subscription_ids': False,
+                                  'sale_line_ids': False,
+                                  'subscription_lines_ids': False,
+                                  'name': "Rebate Discount",
+                                  'subscription_start_date': False,
+                                  'subscription_end_date': False,
+                                  'tax_ids': False
+                                  })
+            return discount_line
 
     def generate_advance_invoice(self, lines):
         """
@@ -328,30 +354,8 @@ class Partner(models.Model):
                             (0, 0, x) for x in downsell_lines.values()
                         ],
                 })
-            total_discount = 0.0
-            discount_line = vals['invoice_line_ids'][0][-1].copy()
-            for inv_val in vals['invoice_line_ids']:
-                if self.management_company_type_id:
-                    flat_discount = self.management_company_type_id.flat_discount
-                    if self.management_company_type_id.clx_category_id and inv_val[-1][
-                        'category_id'] == self.management_company_type_id.clx_category_id.id:
-                        total_discount += flat_discount
-                    else:
-                        total_discount += (inv_val[-1][
-                                               'price_unit'] * self.management_company_type_id.discount_on_order_line) / 100
-            discount_line.update({'price_unit': -abs(total_discount),
-                                  'category_id': False,
-                                  'product_uom_id': False,
-                                  'subscription_id': False,
-                                  'subscription_ids': False,
-                                  'sale_line_ids': False,
-                                  'subscription_lines_ids': False,
-                                  'name': "Rebate Discount",
-                                  'subscription_start_date': False,
-                                  'subscription_end_date': False,
-                                  'tax_ids': False
-                                  })
-            if total_discount:
+            discount_line = self.add_discount_line(vals['invoice_line_ids'])
+            if discount_line:
                 vals['invoice_line_ids'].append((0, 0, discount_line))
             account_id = self.env['account.move'].create(vals)
             if account_id and account_id.invoice_line_ids:
@@ -406,7 +410,7 @@ class Partner(models.Model):
                     del line['line_type']
                 if prepared_lines:
                     prepared_lines = self._merge_line_same_description(prepared_lines)
-                account_id = self.env['account.move'].create({
+                vals = {
                     'ref': order.client_order_ref,
                     'type': 'out_invoice',
                     'invoice_origin': '/'.join(so_lines.mapped('so_line_id').mapped('order_id').mapped('name')),
@@ -425,9 +429,13 @@ class Partner(models.Model):
                     'medium_id': order.medium_id.id,
                     'source_id': order.source_id.id,
                     'invoice_line_ids': [
-                            (0, 0, x) for x in prepared_lines.values()
-                        ]
-                })
+                        (0, 0, x) for x in prepared_lines.values()
+                    ]
+                }
+                discount_line = self.add_discount_line(vals['invoice_line_ids'])
+                if discount_line:
+                    vals['invoice_line_ids'].append((0, 0, discount_line))
+                account_id = self.env['account.move'].create(vals)
         if account_id:
             account_id.write({'subscription_line_ids': [(6, 0, so_lines.ids)]})
 

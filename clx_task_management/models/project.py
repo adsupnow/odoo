@@ -367,6 +367,11 @@ class ProjectTask(models.Model):
         if vals.get('clx_task_manager_id', False):
             for task in self.child_ids:
                 task.clx_task_manager_id = self.clx_task_manager_id.id
+        if vals.get('date_deadline', False) and self.project_id.task_ids.mapped('date_deadline'):
+            tasks_date_set = self.project_id.task_ids.filtered(lambda x: x.date_deadline)
+            all_subtask_max_date_list = max(tasks_date_set.mapped('date_deadline'))
+            if self.project_id.deadline < all_subtask_max_date_list:
+                self.project_id.deadline = all_subtask_max_date_list
         return res
 
     def action_view_popup_task(self):
