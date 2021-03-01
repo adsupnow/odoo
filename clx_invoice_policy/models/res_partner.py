@@ -405,6 +405,44 @@ class Partner(models.Model):
                                 subscription_lines = account_move_lines.move_id.subscription_line_ids.ids
                                 account_move_lines.move_id.write(
                                     {'subscription_line_ids': [(6, 0, subscription_lines)]})
+                    else:
+                        # code for the create credit note
+                        account_move_lines_posted = self.env['account.move.line'].search(
+                            [('partner_id', '=', order.partner_id.id),
+                             ('parent_state', '=', 'posted'),
+                             ('name', '=', line['name'])
+                             ], limit=1)
+                        if account_move_lines_posted:
+                            for line in prepared_lines:
+                                del line['line_type']
+                            for line in prepared_lines:
+                                line['price_unit'] = abs(line['price_unit'])
+                            vals = {
+                                'ref': "Reversal of: " + account_move_lines_posted.move_id.name,
+                                'type': 'out_refund',
+                                'reversed_entry_id': account_move_lines_posted.move_id.id,
+                                'invoice_origin': '/'.join(
+                                    so_lines.mapped('so_line_id').mapped('order_id').mapped('name')),
+                                'invoice_user_id': order.user_id.id,
+                                'narration': order.note,
+                                'partner_id': self._context.get('co_op_invoice_partner') if self._context.get(
+                                    'co_op_invoice_partner') else order.partner_invoice_id.id,
+                                'fiscal_position_id': order.fiscal_position_id.id or self.property_account_position_id.id,
+                                'partner_shipping_id': order.partner_shipping_id.id,
+                                'currency_id': order.pricelist_id.currency_id.id,
+                                'invoice_payment_ref': order.reference,
+                                'invoice_payment_term_id': order.payment_term_id.id,
+                                'invoice_partner_bank_id': order.company_id.partner_id.bank_ids[:1].id,
+                                'team_id': order.team_id.id,
+                                'campaign_id': order.campaign_id.id,
+                                'medium_id': order.medium_id.id,
+                                'source_id': order.source_id.id,
+                                'invoice_line_ids': [
+                                    (0, 0, x) for x in prepared_lines
+                                ]
+                            }
+                            account_id = self.env['account.move'].create(vals)
+
             else:
                 for line in prepared_lines:
                     del line['line_type']
@@ -566,6 +604,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
+        # customers = self.browse(61375)
         if not customers:
             return True
         try:

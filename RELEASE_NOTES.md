@@ -1450,10 +1450,14 @@
 #### Version 13.1.0.0.78
 - [ADD] clx_invoice_policy : Merger 2 sale order lines in invoice if those lines have same description.
 
-## 02/25/2021
+## 02/26/2021
 #### Version 13.1.0.0.79
 - [ADD] clx_invoice_policy : fix the rebate calculation issue for sale order line wise invoice.
 
-## 02/25/2021
+## 02/26/2021
 #### Version 13.3.0.1.3
-- [FIX] clx_task_management : set max deadline date in project 
+- [FIX] clx_task_management : set max deadline date in project
+
+## 03/01/2021
+#### Version 13.1.0.0.80
+- [ADD] clx_invoice_policy : Added development for the create credit note for the downsell lines.
