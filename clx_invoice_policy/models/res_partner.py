@@ -132,6 +132,11 @@ class Partner(models.Model):
         return base_lines
 
     def add_discount_line(self, invoice_line_ids):
+        """
+        add discount line in invoices
+        :param invoice_line_ids: list of dictionary of invoice lines.
+        :return: discount line (type Dictionary)
+        """
         total_discount = 0.0
         discount_line = invoice_line_ids[0][-1].copy()
         for inv_val in invoice_line_ids:
@@ -234,7 +239,6 @@ class Partner(models.Model):
         if not self._context.get('sol'):
             for line in prepared_lines:
                 line_type = line['line_type']
-                del line['line_type']
                 line['product_id'] = False
                 if line_type == 'base':
                     if line['category_id'] not in base_lines:
@@ -355,9 +359,55 @@ class Partner(models.Model):
                         ],
                 })
             discount_line = self.add_discount_line(vals['invoice_line_ids'])
+            account_move_lines_posted = False
             if discount_line:
                 vals['invoice_line_ids'].append((0, 0, discount_line))
-            account_id = self.env['account.move'].create(vals)
+            if all(line[-1]['line_type'] == "downsell" for line in vals['invoice_line_ids']):
+                for line in vals['invoice_line_ids']:
+                    account_move_lines = self.env['account.move.line'].search(
+                        [('partner_id', '=', order.partner_id.id),
+                         ('parent_state', '=', 'draft'),
+                         ('name', '=', line[-1]['name'])
+                         ], limit=1)
+                    if account_move_lines and line[-1][
+                        'line_type'] == 'downsell' and so_lines.ids not in account_move_lines.subscription_lines_ids.ids:
+                        del line[-1]['line_type']
+                        if account_move_lines.move_id:
+                            account_move_lines.move_id.with_context(name=line[-1]['name']).write(
+                                {'invoice_line_ids': [line]}
+                            )
+                            move_line = account_move_lines.move_id.invoice_line_ids.filtered(
+                                lambda x: x.category_id.id == line[-1]['category_id'] and x.name != line[-1]['name'])
+                            if move_line:
+                                move_line.write({'name': line[-1]['name']})
+                            if account_move_lines.move_id.subscription_line_ids:
+                                subscription_lines = account_move_lines.move_id.subscription_line_ids.ids
+                                for s_line in so_lines:
+                                    subscription_lines.append(s_line.id)
+                                account_move_lines.move_id.write(
+                                    {'subscription_line_ids': [(6, 0, list(set(subscription_lines)))]})
+                    else:
+                        # code for the create credit note
+                        account_move_lines_posted = self.env['account.move.line'].search(
+                            [('partner_id', '=', order.partner_id.id),
+                             ('parent_state', '=', 'posted'),
+                             ('name', '=', line[-1]['name'])
+                             ], limit=1)
+                        if account_move_lines_posted:
+                            for line in vals['invoice_line_ids']:
+                                line[-1]['price_unit'] = abs(line[-1]['price_unit'])
+                                del line[-1]['line_type']
+                if account_move_lines_posted:
+                    vals.update({
+                        'ref': "Reversal of: " + account_move_lines_posted.move_id.name,
+                        'type': 'out_refund',
+                        'reversed_entry_id': account_move_lines_posted.move_id.id,
+                    })
+                    account_id = self.env['account.move'].create(vals)
+            else:
+                for line in vals['invoice_line_ids']:
+                    del line[-1]['line_type']
+                account_id = self.env['account.move'].create(vals)
             if account_id and account_id.invoice_line_ids:
                 for inv_line in account_id.invoice_line_ids:
                     price_list = inv_line.mapped('sale_line_ids').mapped('order_id').mapped('pricelist_id')
@@ -383,6 +433,7 @@ class Partner(models.Model):
             order = so_lines[0].so_line_id.order_id
             # if len(prepared_lines) == 1:
             if all(line['line_type'] == "downsell" for line in prepared_lines):
+                # code for the add downsell lines in draft invoice for the same period
                 for line in prepared_lines:
                     account_move_lines = self.env['account.move.line'].search(
                         [('partner_id', '=', order.partner_id.id),
@@ -442,7 +493,6 @@ class Partner(models.Model):
                                 ]
                             }
                             account_id = self.env['account.move'].create(vals)
-
             else:
                 for line in prepared_lines:
                     del line['line_type']

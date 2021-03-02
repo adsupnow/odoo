@@ -1461,3 +1461,7 @@
 ## 03/01/2021
 #### Version 13.1.0.0.80
 - [ADD] clx_invoice_policy : Added development for the create credit note for the downsell lines.
+
+## 03/01/2021
+#### Version 13.1.0.0.81
+- [ADD] clx_invoice_policy : Added code for the generate credit note and update draft invoice when invoice creation type is category wise.
