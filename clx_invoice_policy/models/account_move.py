@@ -18,8 +18,9 @@ class AccountMove(models.Model):
     def post(self):
         res = super(AccountMove, self).post()
         sequence = self.env.ref("clx_invoice_policy.sequence_greystar_sequence")
-        if res and self.partner_id and self.partner_id.management_company_type_id and 'Greystar' in self.partner_id.management_company_type_id.name and sequence:
-            self.name = sequence.next_by_code('greystar.sequence')
+        for recrod in self:
+            if res and recrod.partner_id and recrod.partner_id.management_company_type_id and 'Greystar' in recrod.partner_id.management_company_type_id.name and sequence:
+                recrod.name = sequence.next_by_code('greystar.sequence')
         return res
 
     def set_invoices_month(self):
