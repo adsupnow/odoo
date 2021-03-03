@@ -1469,3 +1469,7 @@
 ## 03/02/2021
 #### Version 13.1.0.0.82
 - [ADD] clx_invoice_policy : When sale order is confirming on 23rd day or after 23rd day than system will create one additional month invoice.
+
+## 03/03/2021
+#### Version 13.1.0.0.83
+- [FIX] clx_invoice_policy : Fixed the rebate line updated issue.

@@ -15,6 +15,53 @@ class AccountMove(models.Model):
     subscription_line_ids = fields.Many2many('sale.subscription.line', 'account_id', string="Subscription Lines")
     invoices_month_year = fields.Char(string="Invoicing Period", compute="set_invoices_month", store=False)
 
+    def _move_autocomplete_invoice_lines_values(self):
+        ''' This method recomputes dynamic lines on the current journal entry that include taxes, cash rounding
+        and payment terms lines.
+        Default Behaviour : it's set product name in label field
+        changed Behaviour : it's not updating product name in label while updating draft invoice lines for downsell cases
+
+        '''
+        self.ensure_one()
+
+        line_currency = self.currency_id if self.currency_id != self.company_id.currency_id else False
+        for line in self.line_ids:
+            # Do something only on invoice lines.
+            if line.exclude_from_invoice_tab:
+                continue
+
+            # Shortcut to load the demo data.
+            # Doing line.account_id triggers a default_get(['account_id']) that could returns a result.
+            # A section / note must not have an account_id set.
+            if not line._cache.get('account_id') and not line.display_type and not line._origin:
+                line.account_id = line._get_computed_account()
+                if not line.account_id:
+                    if self.is_sale_document(include_receipts=True):
+                        line.account_id = self.journal_id.default_credit_account_id
+                    elif self.is_purchase_document(include_receipts=True):
+                        line.account_id = self.journal_id.default_debit_account_id
+            if line.product_id and not line._cache.get('name') and not self._context.get('name', False):
+                line.name = line._get_computed_name()
+
+            # Compute the account before the partner_id
+            # In case account_followup is installed
+            # Setting the partner will get the account_id in cache
+            # If the account_id is not in cache, it will trigger the default value
+            # Which is wrong in some case
+            # It's better to set the account_id before the partner_id
+            # Ensure related fields are well copied.
+            line.partner_id = self.partner_id.commercial_partner_id
+            line.date = self.date
+            line.recompute_tax_line = True
+            line.currency_id = line_currency
+
+        self.line_ids._onchange_price_subtotal()
+        self._recompute_dynamic_lines(recompute_all_taxes=True)
+
+        values = self._convert_to_write(self._cache)
+        values.pop('invoice_line_ids', None)
+        return values
+
     def post(self):
         res = super(AccountMove, self).post()
         sequence = self.env.ref("clx_invoice_policy.sequence_greystar_sequence")

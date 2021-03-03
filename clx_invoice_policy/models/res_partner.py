@@ -445,17 +445,19 @@ class Partner(models.Model):
                         del line['line_type']
                         if account_move_lines.move_id:
                             account_move_lines.move_id.with_context(name=line['name']).write(
-                                {'invoice_line_ids': [(0, 0, line)]
-                                 }
+                                {'invoice_line_ids': [(0, 0, line)]}
                             )
+                            # account_move_lines.move_id.invoice_line_ids = [(0, 0, line)]
                             move_line = account_move_lines.move_id.invoice_line_ids.filtered(
-                                lambda x: x.product_id.id == line['product_id'] and x.name != line['name'])
+                                lambda x: x.product_id.id == line['product_id'] and x.name != line['name'] and 'Rebate' not in x.name)
                             if move_line:
                                 move_line.write({'name': line['name']})
                             if account_move_lines.move_id.subscription_line_ids:
                                 subscription_lines = account_move_lines.move_id.subscription_line_ids.ids
+                                for s_line in so_lines:
+                                    subscription_lines.append(s_line.id)
                                 account_move_lines.move_id.write(
-                                    {'subscription_line_ids': [(6, 0, subscription_lines)]})
+                                    {'subscription_line_ids': [(6, 0, list(set(subscription_lines)))]})
                     else:
                         # code for the create credit note
                         account_move_lines_posted = self.env['account.move.line'].search(
