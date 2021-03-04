@@ -131,6 +131,40 @@ class Partner(models.Model):
                     base_lines[line['description']]['subscription_lines_ids'].extend(line['subscription_lines_ids'])
         return base_lines
 
+    def update_rebate_discount(self, draft_inv):
+        """
+        this method is used for the update rebate discount line value per invoice
+        :param draft_inv: recordset of the account.move (draft invoice)
+        :return:
+        """
+        discount_line = {}
+        if draft_inv:
+            for draft_invoice in draft_inv:
+                total_discount = 0.0
+                for inv_line in draft_invoice.invoice_line_ids.filtered(lambda x: "Rebate" not in x.name):
+                    if self.management_company_type_id:
+                        flat_discount = self.management_company_type_id.flat_discount
+                        if self.management_company_type_id.clx_category_id and inv_line.category_id.id == self.management_company_type_id.clx_category_id.id:
+                            total_discount += flat_discount
+                        else:
+                            total_discount += (inv_line.price_unit * self.management_company_type_id.discount_on_order_line) / 100
+                if total_discount:
+                    print(total_discount)
+                    rebate_line = draft_invoice.invoice_line_ids.filtered(lambda x: "Rebate" in x.name)
+                    line_rebate_line = draft_invoice.line_ids.filtered(lambda x: "Rebate" in x.name)
+                    # if line_rebate_line:
+                    #     line_rebate_line.unlink()
+                    if rebate_line:
+                        a = rebate_line._get_price_total_and_subtotal(price_unit=-abs(total_discount), quantity=None,
+                                                                      discount=None, currency=None, product=None,
+                                                                      partner=None, taxes=None, move_type=None)
+                        a.update({'price_unit': -abs(total_discount)})
+                        rebate_line.write(a)
+                        rebate_line.with_context(check_move_validity=False)._recompute_dynamic_lines \
+                            (recompute_all_taxes=True, recompute_tax_base_amount=True)
+                        # b = rebate_line._get_fields_onchange_subtotal(price_subtotal=total_discount, move_type=None, currency=None, company=None, date=None)
+                        # rebate_line.update(b)
+
     def add_discount_line(self, invoice_line_ids):
         """
         add discount line in invoices
@@ -159,7 +193,9 @@ class Partner(models.Model):
                                   'name': "Rebate Discount",
                                   'subscription_start_date': False,
                                   'subscription_end_date': False,
-                                  'tax_ids': False
+                                  'tax_ids': False,
+                                  'product_id': False,
+                                  'description': "Rebate Discount"
                                   })
             return discount_line
 
@@ -193,7 +229,7 @@ class Partner(models.Model):
 
         so_lines = lines.filtered(lambda
                                       x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'monthly')
-        if self._context.get('generate_invoice_date_range'):
+        if self._context.get('generate_inv-abs(total_discount)oice_date_range'):
             so_lines = lines.filtered(lambda
                                           x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'monthly')
         if not so_lines and not yearly_lines:
@@ -358,10 +394,12 @@ class Partner(models.Model):
                             (0, 0, x) for x in downsell_lines.values()
                         ],
                 })
-            discount_line = self.add_discount_line(vals['invoice_line_ids'])
+            # discount_line = self.add_discount_line(vals['invoice_line_ids'])
             account_move_lines_posted = False
-            if discount_line:
-                vals['invoice_line_ids'].append((0, 0, discount_line))
+            account_obj = self.env['account.move']
+            # if discount_line:
+            #     vals['invoice_line_ids'].append((0, 0, discount_line))
+            draft_invoices = []
             if all(line[-1]['line_type'] == "downsell" for line in vals['invoice_line_ids']):
                 for line in vals['invoice_line_ids']:
                     account_move_lines = self.env['account.move.line'].search(
@@ -372,6 +410,7 @@ class Partner(models.Model):
                     if account_move_lines and line[-1][
                         'line_type'] == 'downsell' and so_lines.ids not in account_move_lines.subscription_lines_ids.ids:
                         del line[-1]['line_type']
+                        draft_invoices.append(account_move_lines.move_id.id)
                         if account_move_lines.move_id:
                             account_move_lines.move_id.with_context(name=line[-1]['name']).write(
                                 {'invoice_line_ids': [line]}
@@ -396,13 +435,22 @@ class Partner(models.Model):
                         if account_move_lines_posted:
                             for line in vals['invoice_line_ids']:
                                 line[-1]['price_unit'] = abs(line[-1]['price_unit'])
-                                del line[-1]['line_type']
+                                if "line_type" in line[-1]:
+                                    del line[-1]['line_type']
+                # write code for the update rebate discount line for all invoices
+                if draft_invoices:
+                    draft_invoices = account_obj.browse(draft_invoices)
+                    if draft_invoices:
+                        self.update_rebate_discount(draft_invoices)
                 if account_move_lines_posted:
                     vals.update({
                         'ref': "Reversal of: " + account_move_lines_posted.move_id.name,
                         'type': 'out_refund',
                         'reversed_entry_id': account_move_lines_posted.move_id.id,
                     })
+                    discount_line = self.add_discount_line(vals['invoice_line_ids'])
+                    if discount_line:
+                        vals['invoice_line_ids'].append((0, 0, discount_line))
                     account_id = self.env['account.move'].create(vals)
             else:
                 for line in vals['invoice_line_ids']:
@@ -430,8 +478,10 @@ class Partner(models.Model):
                             if rule.is_wholesale_formula:
                                 inv_line.wholesale = inv_line.price_unit - inv_line.management_fees
         else:
+            # create invoice as per the order lines
             order = so_lines[0].so_line_id.order_id
-            # if len(prepared_lines) == 1:
+            draft_invoices = []
+            account_obj = self.env['account.move']
             if all(line['line_type'] == "downsell" for line in prepared_lines):
                 # code for the add downsell lines in draft invoice for the same period
                 for line in prepared_lines:
@@ -443,13 +493,15 @@ class Partner(models.Model):
                     if account_move_lines and line[
                         'line_type'] == 'downsell' and so_lines.ids not in account_move_lines.subscription_lines_ids.ids:
                         del line['line_type']
+                        draft_invoices.append(account_move_lines.move_id.id)
                         if account_move_lines.move_id:
                             account_move_lines.move_id.with_context(name=line['name']).write(
                                 {'invoice_line_ids': [(0, 0, line)]}
                             )
                             # account_move_lines.move_id.invoice_line_ids = [(0, 0, line)]
                             move_line = account_move_lines.move_id.invoice_line_ids.filtered(
-                                lambda x: x.product_id.id == line['product_id'] and x.name != line['name'] and 'Rebate' not in x.name)
+                                lambda x: x.product_id.id == line['product_id'] and x.name != line[
+                                    'name'] and 'Rebate' not in x.name)
                             if move_line:
                                 move_line.write({'name': line['name']})
                             if account_move_lines.move_id.subscription_line_ids:
@@ -495,6 +547,12 @@ class Partner(models.Model):
                                 ]
                             }
                             account_id = self.env['account.move'].create(vals)
+
+                # write code for the update rebate discount line for all invoices
+                if draft_invoices:
+                    draft_invoices = account_obj.browse(draft_invoices)
+                    if draft_invoices:
+                        self.update_rebate_discount(draft_invoices)
             else:
                 for line in prepared_lines:
                     del line['line_type']
@@ -656,7 +714,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        # customers = self.browse(61375)
+        # customers = self.browse(61998)
         if not customers:
             return True
         try:
