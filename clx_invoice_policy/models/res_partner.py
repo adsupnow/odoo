@@ -147,23 +147,38 @@ class Partner(models.Model):
                         if self.management_company_type_id.clx_category_id and inv_line.category_id.id == self.management_company_type_id.clx_category_id.id:
                             total_discount += flat_discount
                         else:
-                            total_discount += (inv_line.price_unit * self.management_company_type_id.discount_on_order_line) / 100
+                            total_discount += (
+                                                      inv_line.price_unit * self.management_company_type_id.discount_on_order_line) / 100
                 if total_discount:
-                    print(total_discount)
                     rebate_line = draft_invoice.invoice_line_ids.filtered(lambda x: "Rebate" in x.name)
-                    line_rebate_line = draft_invoice.line_ids.filtered(lambda x: "Rebate" in x.name)
-                    # if line_rebate_line:
-                    #     line_rebate_line.unlink()
+                    receivable_line = draft_invoice.line_ids.filtered(
+                        lambda x: x.account_id.id == draft_invoice.partner_id.property_account_receivable_id.id)
                     if rebate_line:
-                        a = rebate_line._get_price_total_and_subtotal(price_unit=-abs(total_discount), quantity=None,
-                                                                      discount=None, currency=None, product=None,
-                                                                      partner=None, taxes=None, move_type=None)
-                        a.update({'price_unit': -abs(total_discount)})
-                        rebate_line.write(a)
-                        rebate_line.with_context(check_move_validity=False)._recompute_dynamic_lines \
-                            (recompute_all_taxes=True, recompute_tax_base_amount=True)
-                        # b = rebate_line._get_fields_onchange_subtotal(price_subtotal=total_discount, move_type=None, currency=None, company=None, date=None)
-                        # rebate_line.update(b)
+                        receivable_line_debit = rebate_line.debit
+
+                    self.env.cr.execute(
+                        "DELETE FROM account_move_line WHERE id = %s",
+                        (rebate_line.id,))
+                    discount_line.update({'price_unit': -abs(total_discount),
+                                          'category_id': False,
+                                          'product_uom_id': False,
+                                          'subscription_id': False,
+                                          'subscription_ids': False,
+                                          'sale_line_ids': False,
+                                          'subscription_lines_ids': False,
+                                          'name': "Rebate Discount",
+                                          'subscription_start_date': False,
+                                          'subscription_end_date': False,
+                                          'tax_ids': False,
+                                          'product_id': False,
+                                          'description': "Rebate Discount"
+                                          })
+                    draft_invoice.with_context(check_move_validity=False, name="name").write(
+                        {'invoice_line_ids': [(0, 0, discount_line)]})
+                    if receivable_line:
+                        receivable_line.debit += receivable_line_debit
+                    # draft_invoice._onchange_recompute_dynamic_lines()
+                    # draft_invoice._inverse_amount_total()
 
     def add_discount_line(self, invoice_line_ids):
         """
