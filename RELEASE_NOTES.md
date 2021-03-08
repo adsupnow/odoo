@@ -1481,3 +1481,7 @@
 ## 03/05/2021
 #### Version 13.1.0.0.85
 - [FIX] clx_invoice_policy : added rebate discount line on draft credit note.
+
+## 03/05/2021
+#### Version 13.1.0.0.86
+- [FIX] clx_invoice_policy : fix the issue when creating invoice from the schedular create separate invoice per line.

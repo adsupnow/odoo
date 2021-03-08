@@ -97,7 +97,11 @@ class Partner(models.Model):
                 if a:
                     advance_lines = self.env['sale.subscription.line'].browse(a)
             advance_lines = advance_lines + not_base_lines
-            self.generate_advance_invoice(advance_lines)
+            if self._context.get('check_invoice_start_date', False):
+                for adv_line in advance_lines:
+                    self.generate_advance_invoice(adv_line)
+            else:
+                self.generate_advance_invoice(advance_lines)
 
     def get_advanced_sub_lines(self, lines):
         """
@@ -732,7 +736,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        # customers = self.browse(61389)
+        # customers = self.browse(61393)
         if not customers:
             return True
         try:
