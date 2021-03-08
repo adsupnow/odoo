@@ -561,6 +561,9 @@ class Partner(models.Model):
                                     (0, 0, x) for x in prepared_lines
                                 ]
                             }
+                            discount_line = self.add_discount_line(vals['invoice_line_ids'])
+                            if discount_line:
+                                vals['invoice_line_ids'].append((0, 0, discount_line))
                             account_id = self.env['account.move'].create(vals)
 
                 # write code for the update rebate discount line for all invoices
@@ -729,7 +732,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        # customers = self.browse(61998)
+        # customers = self.browse(61389)
         if not customers:
             return True
         try:

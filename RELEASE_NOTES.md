@@ -1477,3 +1477,7 @@
 ## 03/05/2021
 #### Version 13.1.0.0.84
 - [FIX] clx_invoice_policy : Fixed the issue related to credit and debit while updating rebate line.
+
+## 03/05/2021
+#### Version 13.1.0.0.85
+- [FIX] clx_invoice_policy : added rebate discount line on draft credit note.
