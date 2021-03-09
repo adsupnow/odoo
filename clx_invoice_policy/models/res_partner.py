@@ -98,8 +98,12 @@ class Partner(models.Model):
                     advance_lines = self.env['sale.subscription.line'].browse(a)
             advance_lines = advance_lines + not_base_lines
             if self._context.get('check_invoice_start_date', False):
-                for adv_line in advance_lines:
-                    self.generate_advance_invoice(adv_line)
+                unique_date_list = list(set(advance_lines.mapped('invoice_start_date')))
+                for date in unique_date_list:
+                    month_wise_adv_lines = advance_lines.filtered(
+                        lambda x: x.invoice_start_date.month == date.month and x.invoice_start_date.year == date.year)
+                    if month_wise_adv_lines:
+                        self.generate_advance_invoice(month_wise_adv_lines)
             else:
                 self.generate_advance_invoice(advance_lines)
 
@@ -514,9 +518,20 @@ class Partner(models.Model):
                         del line['line_type']
                         draft_invoices.append(account_move_lines.move_id.id)
                         if account_move_lines.move_id:
-                            account_move_lines.move_id.with_context(name=line['name']).write(
-                                {'invoice_line_ids': [(0, 0, line)]}
-                            )
+                            same_product_line = account_move_lines.move_id.invoice_line_ids.filtered(lambda x:x.product_id.id == line['product_id'])
+                            if same_product_line:
+                                new_price = same_product_line.price_unit + line['price_unit']
+                                self.env.cr.execute(
+                                    "DELETE FROM account_move_line WHERE id = %s",
+                                    (same_product_line.id,))
+                                line['price_unit'] = new_price
+                                account_move_lines.move_id.with_context(check_move_validity=False, name="name").write(
+                                    {'invoice_line_ids': [(0, 0, line)]})
+
+                            else:
+                                account_move_lines.move_id.with_context(name=line['name']).write(
+                                    {'invoice_line_ids': [(0, 0, line)]}
+                                )
                             # account_move_lines.move_id.invoice_line_ids = [(0, 0, line)]
                             move_line = account_move_lines.move_id.invoice_line_ids.filtered(
                                 lambda x: x.product_id.id == line['product_id'] and x.name != line[
@@ -736,7 +751,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        # customers = self.browse(61393)
+        # customers = self.browse(61394)
         if not customers:
             return True
         try:

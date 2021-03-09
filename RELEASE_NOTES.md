@@ -1485,3 +1485,9 @@
 ## 03/05/2021
 #### Version 13.1.0.0.86
 - [FIX] clx_invoice_policy : fix the issue when creating invoice from the schedular create separate invoice per line.
+
+## 03/05/2021
+#### Version 13.1.0.0.87
+- [FIX] clx_invoice_policy : fixed the issue line claping in invoice creation.
+
+
