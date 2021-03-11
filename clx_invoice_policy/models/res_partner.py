@@ -67,8 +67,17 @@ class Partner(models.Model):
         advance_lines = lines.filtered(
             lambda sl: (sl.so_line_id.order_id.clx_invoice_policy_id.policy_type == 'advance'))
         if self._context.get('check_invoice_start_date', False):
-            advance_lines = advance_lines.filtered(
-                lambda sl: (sl.invoice_start_date and sl.invoice_end_date))
+            if self.clx_invoice_policy_id.policy_type == "advance":
+                start_date = fields.Date.today().replace(day=1)
+                end_date = start_date + relativedelta(months=3)
+                end_date = end_date + relativedelta(days=-1)
+                advance_lines = advance_lines.filtered(
+                    lambda sl: (sl.invoice_start_date and sl.invoice_end_date))
+                advance_lines = advance_lines.filtered(
+                    lambda x: (not x.end_date and x.invoice_start_date and x.invoice_start_date < end_date)
+                              or
+                              (x.end_date and x.invoice_start_date and x.invoice_start_date < end_date)
+                )
         if areas_lines:
             self.generate_arrears_invoice(areas_lines)
         if advance_lines:
@@ -252,7 +261,7 @@ class Partner(models.Model):
 
         so_lines = lines.filtered(lambda
                                       x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'monthly')
-        if self._context.get('generate_inv-abs(total_discount)oice_date_range'):
+        if self._context.get('generate_invoice_date_range'):
             so_lines = lines.filtered(lambda
                                           x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'monthly')
         if not so_lines and not yearly_lines:
@@ -511,39 +520,32 @@ class Partner(models.Model):
                     account_move_lines = self.env['account.move.line'].search(
                         [('partner_id', '=', order.partner_id.id),
                          ('parent_state', '=', 'draft'),
-                         ('name', '=', line['name'])
+                         ('name', '=', line['name']),
+                         ('product_id', '=', line['product_id'])
                          ], limit=1)
-                    if account_move_lines and line[
-                        'line_type'] == 'downsell' and so_lines.ids not in account_move_lines.subscription_lines_ids.ids:
+                    move_id = account_move_lines.move_id
+                    if account_move_lines:
                         del line['line_type']
                         draft_invoices.append(account_move_lines.move_id.id)
                         if account_move_lines.move_id:
-                            same_product_line = account_move_lines.move_id.invoice_line_ids.filtered(lambda x:x.product_id.id == line['product_id'])
-                            if same_product_line:
-                                new_price = same_product_line.price_unit + line['price_unit']
-                                self.env.cr.execute(
-                                    "DELETE FROM account_move_line WHERE id = %s",
-                                    (same_product_line.id,))
-                                line['price_unit'] = new_price
-                                account_move_lines.move_id.with_context(check_move_validity=False, name="name").write(
-                                    {'invoice_line_ids': [(0, 0, line)]})
-
-                            else:
-                                account_move_lines.move_id.with_context(name=line['name']).write(
-                                    {'invoice_line_ids': [(0, 0, line)]}
-                                )
-                            # account_move_lines.move_id.invoice_line_ids = [(0, 0, line)]
-                            move_line = account_move_lines.move_id.invoice_line_ids.filtered(
-                                lambda x: x.product_id.id == line['product_id'] and x.name != line[
-                                    'name'] and 'Rebate' not in x.name)
-                            if move_line:
-                                move_line.write({'name': line['name']})
-                            if account_move_lines.move_id.subscription_line_ids:
-                                subscription_lines = account_move_lines.move_id.subscription_line_ids.ids
-                                for s_line in so_lines:
-                                    subscription_lines.append(s_line.id)
-                                account_move_lines.move_id.write(
-                                    {'subscription_line_ids': [(6, 0, list(set(subscription_lines)))]})
+                            new_price = account_move_lines.price_unit + line['price_unit']
+                            self.env.cr.execute(
+                                "DELETE FROM account_move_line WHERE id = %s",
+                                (account_move_lines.id,))
+                            account_move_lines._cr.commit()
+                            line['price_unit'] = new_price
+                            move_id.with_context(check_move_validity=False, name="name").write(
+                                {'invoice_line_ids': [(0, 0, line)]})
+                    else:
+                        move_id.with_context(name=line['name']).write(
+                            {'invoice_line_ids': [(0, 0, line)]}
+                        )
+                    if move_id.invoice_line_ids.subscription_lines_ids:
+                        subscription_lines = move_id.invoice_line_ids.subscription_lines_ids.ids
+                        for s_line in so_lines:
+                            subscription_lines.append(s_line.id)
+                        move_id.write(
+                            {'subscription_line_ids': [(6, 0, list(set(subscription_lines)))]})
                     else:
                         # code for the create credit note
                         account_move_lines_posted = self.env['account.move.line'].search(
@@ -751,7 +753,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        # customers = self.browse(61394)
+        customers = self.browse(61410)
         if not customers:
             return True
         try:

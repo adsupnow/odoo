@@ -33,7 +33,7 @@ class SaleOrder(models.Model):
             ('so_line_id.order_id', '=', self.id),
         ])
         current_month_start_day = fields.Date.today()
-        end_date = current_month_start_day + relativedelta(months=self.clx_invoice_policy_id.num_of_month + 1)
+        end_date = current_month_start_day.replace(day=1) + relativedelta(months=self.clx_invoice_policy_id.num_of_month + 1)
         end_date = end_date - relativedelta(days=1)
         lines = so_lines.filtered(lambda x: x.start_date and x.start_date < end_date)
         count = self.clx_invoice_policy_id.num_of_month + 1

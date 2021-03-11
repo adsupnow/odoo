@@ -1490,4 +1490,12 @@
 #### Version 13.1.0.0.87
 - [FIX] clx_invoice_policy : fixed the issue line claping in invoice creation.
 
+## 03/11/2021
+#### Version 13.1.0.0.88
+- [FIX] clx_invoice_policy : fixed the invoice creation issue when cron job is run per month.
+
+## 03/11/2021
+#### Version 13.3.0.1.4
+- [FIX] clx_task_management : Fixed the demo data issue. 
+
 

@@ -247,6 +247,7 @@ class SaleSubscriptionLine(models.Model):
             'analytic_tag_ids': [(6, 0, line.analytic_tag_ids.ids)],
             'line_type': self.line_type,
             'sale_line_ids': line.ids,
+            'description': line.name
         }
 
         if self.invoice_start_date and self.start_date.month == self.invoice_start_date.month:
