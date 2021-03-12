@@ -1498,8 +1498,12 @@
 #### Version 13.3.0.1.4
 - [FIX] clx_task_management : Fixed the demo data issue.
 
-## 03/11/2021
+## 03/12/2021
 #### Version 13.1.0.0.89
-- [FIX] clx_invoice_policy : fixed the cron job issue. 
+- [FIX] clx_invoice_policy : fixed the cron job issue.
+
+## 03/12/2021
+#### Version 13.1.0.0.90
+- [FIX] clx_invoice_policy : fixed line type issue.
 
 

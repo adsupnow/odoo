@@ -528,7 +528,8 @@ class Partner(models.Model):
                          ], limit=1)
                     move_id = account_move_lines.move_id
                     if account_move_lines:
-                        del line['line_type']
+                        if 'line_type' in line:
+                            del line['line_type']
                         draft_invoices.append(account_move_lines.move_id.id)
                         if account_move_lines.move_id:
                             new_price = account_move_lines.price_unit + line['price_unit']
@@ -558,7 +559,8 @@ class Partner(models.Model):
                              ], limit=1)
                         if account_move_lines_posted:
                             for line in prepared_lines:
-                                del line['line_type']
+                                if 'line_type' in line:
+                                    del line['line_type']
                             for line in prepared_lines:
                                 line['price_unit'] = abs(line['price_unit'])
                             vals = {
@@ -597,7 +599,8 @@ class Partner(models.Model):
                         self.update_rebate_discount(draft_invoices)
             else:
                 for line in prepared_lines:
-                    del line['line_type']
+                    if 'line_type' in line:
+                        del line['line_type']
                 if prepared_lines:
                     prepared_lines = self._merge_line_same_description(prepared_lines)
                 vals = {
@@ -651,7 +654,8 @@ class Partner(models.Model):
         if not self._context.get('sol'):
             for line in prepared_lines:
                 line_type = line['line_type']
-                del line['line_type']
+                if 'line_type' in line:
+                    del line['line_type']
                 line['product_id'] = False
                 if line['category_id'] not in invoice_lines:
                     invoice_lines.update({line['category_id']: line})
