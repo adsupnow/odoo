@@ -73,11 +73,14 @@ class Partner(models.Model):
                 end_date = end_date + relativedelta(days=-1)
                 advance_lines = advance_lines.filtered(
                     lambda sl: (sl.invoice_start_date and sl.invoice_end_date))
-                advance_lines = advance_lines.filtered(
-                    lambda x: (not x.end_date and x.invoice_start_date and x.invoice_start_date < end_date)
-                              or
-                              (x.end_date and x.invoice_start_date and x.invoice_start_date < end_date)
-                )
+                final_adv_line = self.env['sale.subscription.line']
+                for adv_line in advance_lines:
+                    if adv_line.product_id.subscription_template_id.recurring_rule_type == "monthly":
+                        if not adv_line.end_date and end_date >= adv_line.invoice_start_date:
+                            final_adv_line += adv_line
+                        elif adv_line.invoice_end_date and adv_line.invoice_start_date <= end_date and start_date <= adv_line.invoice_end_date:
+                            final_adv_line += adv_line
+                advance_lines = final_adv_line
         if areas_lines:
             self.generate_arrears_invoice(areas_lines)
         if advance_lines:
@@ -753,7 +756,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        customers = self.browse(61410)
+        # customers = self.browse(61413)
         if not customers:
             return True
         try:
