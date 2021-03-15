@@ -1509,3 +1509,7 @@
 ## 03/12/2021
 #### Version 13.1.0.0.91
 - [FIX] clx_invoice_policy : Fixed the issue related to cron job about the invoice is not created.
+
+## 03/15/2021
+#### Version 13.1.0.0.92
+- [FIX] clx_invoice_policy : Fixed the issue rebate line when invoice type is category wise.

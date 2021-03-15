@@ -495,6 +495,9 @@ class Partner(models.Model):
             else:
                 for line in vals['invoice_line_ids']:
                     del line[-1]['line_type']
+                discount_line = self.add_discount_line(vals['invoice_line_ids'])
+                if discount_line:
+                    vals['invoice_line_ids'].append((0, 0, discount_line))
                 account_id = self.env['account.move'].create(vals)
             if account_id and account_id.invoice_line_ids:
                 for inv_line in account_id.invoice_line_ids:
