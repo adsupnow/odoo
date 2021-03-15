@@ -1506,4 +1506,6 @@
 #### Version 13.1.0.0.90
 - [FIX] clx_invoice_policy : fixed line type issue.
 
-
+## 03/12/2021
+#### Version 13.1.0.0.91
+- [FIX] clx_invoice_policy : Fixed the issue related to cron job about the invoice is not created.

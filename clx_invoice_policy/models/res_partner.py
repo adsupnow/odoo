@@ -50,7 +50,6 @@ class Partner(models.Model):
         """
         if not self.is_subscribed:
             return self
-
         lines = self.env['sale.subscription.line'].search([
             ('so_line_id.order_id.partner_id', 'child_of', self.id),
             ('so_line_id.order_id.state', 'in', ('sale', 'done')),
@@ -115,9 +114,15 @@ class Partner(models.Model):
                     month_wise_adv_lines = advance_lines.filtered(
                         lambda x: x.invoice_start_date.month == date.month and x.invoice_start_date.year == date.year)
                     if month_wise_adv_lines:
-                        self.generate_advance_invoice(month_wise_adv_lines)
+                        if self.invoice_selection == "sol":
+                            self.with_context(sol=True).generate_advance_invoice(month_wise_adv_lines)
+                        else:
+                            self.generate_advance_invoice(month_wise_adv_lines)
             else:
-                self.generate_advance_invoice(advance_lines)
+                if self.invoice_selection == "sol":
+                    self.with_context(sol=True).generate_advance_invoice(advance_lines)
+                else:
+                    self.generate_advance_invoice(advance_lines)
 
     def get_advanced_sub_lines(self, lines):
         """
@@ -765,7 +770,10 @@ class Partner(models.Model):
             return True
         try:
             for customer in customers:
-                customer.with_context(check_invoice_start_date=True).generate_invoice()
+                try:
+                    customer.with_context(check_invoice_start_date=True).generate_invoice()
+                except Exception as e:
+                    print("-------------")
             return True
         except Exception as e:
             return False
