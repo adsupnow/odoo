@@ -27,4 +27,18 @@
         <field name="active" eval="True"/>
     </record>
 
+    <record id="clx_subscription_invoice_scheduler_new" model="ir.cron">
+        <field name="name">CLX: Subscription Invoice Scheduler New</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">model.new_generate_invoice()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">months</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="nextcall"
+               eval="((datetime.now().replace(day=1) + relativedelta(months=1)) + relativedelta(days=-1)).strftime('%Y-%m-%d 00:00:00')"/>
+        <field name="active" eval="True"/>
+    </record>
+
 </odoo>

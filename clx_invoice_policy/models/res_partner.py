@@ -2,13 +2,14 @@
 # Part of Odoo, CLx Media
 # See LICENSE file for full copyright & licensing details.
 
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
 from odoo.exceptions import UserError
 from odoo import fields, models, api, _
 from dateutil import parser
 from calendar import monthrange
+from collections import OrderedDict
 
 
 class Partner(models.Model):
@@ -768,7 +769,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        # customers = self.browse(61413)
+        # customers = self.browse(42746)
         if not customers:
             return True
         try:
@@ -780,3 +781,72 @@ class Partner(models.Model):
             return True
         except Exception as e:
             return False
+
+    def new_generate_invoice(self):
+        customers = self.search([
+            ('is_subscribed', '=', True),
+            ('clx_invoice_policy_id', '!=', False)
+        ])
+        # customers = self.browse(42747)
+        if not customers:
+            return True
+
+        start_date = fields.Date.today().replace(day=1)
+        end_date = start_date + relativedelta(months=3)
+        end_date = end_date + relativedelta(days=-1)
+        for customer in customers:
+            lang = customer.lang
+            format_date = self.env['ir.qweb.field.date'].with_context(
+                lang=lang).value_to_html
+            all_lines = self.env['sale.subscription.line'].search([
+                ('so_line_id.order_id.partner_id', 'child_of', customer.id),
+                ('so_line_id.order_id.state', 'in', ('sale', 'done')),
+            ])
+            all_lines = all_lines.filtered(
+                lambda sl: (
+                        sl.so_line_id.order_id.clx_invoice_policy_id.policy_type == 'advance' and sl.product_id.subscription_template_id.recurring_rule_type == "monthly"))
+            count = len(OrderedDict(((start_date + timedelta(_)).strftime("%B-%Y"), 0) for _ in
+                                    range((end_date - start_date).days)))
+            next_month_date = start_date
+            start_date = start_date
+            for i in range(0, count):
+                next_month_date = next_month_date + relativedelta(months=1)
+                end_date = date(start_date.year, start_date.month,
+                                monthrange(start_date.year, start_date.month)[-1])
+                final_adv_line = self.env['sale.subscription.line']
+
+                for adv_line in all_lines:
+                    if adv_line.product_id.subscription_template_id.recurring_rule_type == "monthly":
+                        if not adv_line.end_date and end_date >= adv_line.start_date:
+                            final_adv_line += adv_line
+                        elif adv_line.end_date and adv_line.start_date <= end_date and start_date <= adv_line.end_date:
+                            final_adv_line += adv_line
+                advance_lines = final_adv_line
+                period_msg = ("Invoicing period: %s - %s") % (
+                    format_date(fields.Date.to_string(start_date), {}),
+                    format_date(fields.Date.to_string(end_date), {}))
+                account_move_lines = self.env['account.move.line'].search(
+                    [('partner_id', '=', customer.id), ('name', '=', period_msg),
+                     ('parent_state', 'in', ('draft', 'posted')),
+                     ('subscription_lines_ids', 'in', advance_lines.ids)])
+                if account_move_lines:
+                    for ad_line in advance_lines:
+                        if ad_line.id in account_move_lines.mapped('subscription_lines_ids').ids:
+                            advance_lines -= ad_line
+                if customer.invoice_selection == 'sol':
+                    customer.with_context(generate_invoice_date_range=True, start_date=start_date,
+                                          end_date=end_date, sol=True,
+                                          ).generate_advance_invoice(
+                        advance_lines)
+                else:
+                    customer.with_context(generate_invoice_date_range=True, start_date=start_date,
+                                          end_date=end_date,
+                                          ).generate_advance_invoice(
+                        advance_lines)
+
+                for adv_line in all_lines:
+                    if adv_line.product_id.subscription_template_id.recurring_rule_type == "yearly" and adv_line.invoice_start_date == next_month_date:
+                        advance_lines += adv_line
+                    elif adv_line.product_id.subscription_template_id.recurring_rule_type == "yearly":
+                        advance_lines -= adv_line
+                start_date = start_date + relativedelta(months=1)
