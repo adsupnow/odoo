@@ -166,6 +166,7 @@ class Partner(models.Model):
         discount_line = {}
         if draft_inv:
             for draft_invoice in draft_inv:
+                receivable_line_debit = False
                 total_discount = 0.0
                 for inv_line in draft_invoice.invoice_line_ids.filtered(lambda x: "Rebate" not in x.name):
                     if self.management_company_type_id:
@@ -181,10 +182,9 @@ class Partner(models.Model):
                         lambda x: x.account_id.id == draft_invoice.partner_id.property_account_receivable_id.id)
                     if rebate_line:
                         receivable_line_debit = rebate_line.debit
-
-                    self.env.cr.execute(
-                        "DELETE FROM account_move_line WHERE id = %s",
-                        (rebate_line.id,))
+                        self.env.cr.execute(
+                            "DELETE FROM account_move_line WHERE id = %s",
+                            (rebate_line.id,))
                     discount_line.update({'price_unit': -abs(total_discount),
                                           'category_id': False,
                                           'product_uom_id': False,
@@ -790,11 +790,10 @@ class Partner(models.Model):
         # customers = self.browse(42747)
         if not customers:
             return True
-
-        start_date = fields.Date.today().replace(day=1)
-        end_date = start_date + relativedelta(months=3)
-        end_date = end_date + relativedelta(days=-1)
         for customer in customers:
+            start_date = fields.Date.today().replace(day=1)
+            end_date = start_date + relativedelta(months=3)
+            end_date = end_date + relativedelta(days=-1)
             lang = customer.lang
             format_date = self.env['ir.qweb.field.date'].with_context(
                 lang=lang).value_to_html
@@ -850,3 +849,5 @@ class Partner(models.Model):
                     elif adv_line.product_id.subscription_template_id.recurring_rule_type == "yearly":
                         advance_lines -= adv_line
                 start_date = start_date + relativedelta(months=1)
+
+
