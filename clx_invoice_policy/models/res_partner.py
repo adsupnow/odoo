@@ -15,6 +15,7 @@ from collections import OrderedDict
 class Partner(models.Model):
     _inherit = 'res.partner'
 
+
     clx_invoice_policy_id = fields.Many2one(
         'clx.invoice.policy', string="Invoice Policy")
     is_subscribed = fields.Boolean(
@@ -787,7 +788,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        # customers = self.browse(42747)
+        # customers = self.browse(61417)
         if not customers:
             return True
         for customer in customers:
@@ -833,11 +834,27 @@ class Partner(models.Model):
                         if ad_line.id in account_move_lines.mapped('subscription_lines_ids').ids:
                             advance_lines -= ad_line
                 if customer.invoice_selection == 'sol':
+                    if sum(advance_lines.mapped('price_unit')) < 0:
+                        downsell_lines = advance_lines.filtered(lambda x: x.line_type == 'downsell')
+                        if downsell_lines:
+                            advance_lines -= downsell_lines
+                            customer.with_context(generate_invoice_date_range=True, start_date=start_date,
+                                                  end_date=end_date, sol=True,
+                                                  ).generate_advance_invoice(
+                                downsell_lines)
                     customer.with_context(generate_invoice_date_range=True, start_date=start_date,
                                           end_date=end_date, sol=True,
                                           ).generate_advance_invoice(
                         advance_lines)
                 else:
+                    if sum(advance_lines.mapped('price_unit')) < 0:
+                        downsell_lines = advance_lines.filtered(lambda x: x.line_type == 'downsell')
+                        if downsell_lines:
+                            advance_lines -= downsell_lines
+                            customer.with_context(generate_invoice_date_range=True, start_date=start_date,
+                                                  end_date=end_date,
+                                                  ).generate_advance_invoice(
+                                downsell_lines)
                     customer.with_context(generate_invoice_date_range=True, start_date=start_date,
                                           end_date=end_date,
                                           ).generate_advance_invoice(
@@ -849,5 +866,3 @@ class Partner(models.Model):
                     elif adv_line.product_id.subscription_template_id.recurring_rule_type == "yearly":
                         advance_lines -= adv_line
                 start_date = start_date + relativedelta(months=1)
-
-

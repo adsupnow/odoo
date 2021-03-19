@@ -1514,6 +1514,10 @@
 #### Version 13.1.0.0.92
 - [FIX] clx_invoice_policy : Fixed the issue rebate line when invoice type is category wise.
 
-## 03/15/2021
+## 03/18/2021
 #### Version 13.1.0.0.93
-- [FIX] clx_invoice_policy : Fixed the issue downsell insvoice generation for that created new cron job. 
+- [FIX] clx_invoice_policy : Fixed the issue downsell insvoice generation for that created new cron job.
+
+## 03/19/2021
+#### Version 13.1.0.0.94
+- [FIX] clx_invoice_policy : fixed the issue of creating negative value invoice.
