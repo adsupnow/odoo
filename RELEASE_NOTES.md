@@ -1521,3 +1521,7 @@
 ## 03/19/2021
 #### Version 13.1.0.0.94
 - [FIX] clx_invoice_policy : fixed the issue of creating negative value invoice.
+
+## 03/22/2021
+#### Version 13.1.0.0.95
+- [ADD] clx_invoice_policy : added a option to send a mail of draft invoice.
