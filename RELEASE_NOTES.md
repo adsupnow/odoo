@@ -1525,3 +1525,7 @@
 ## 03/22/2021
 #### Version 13.1.0.0.95
 - [ADD] clx_invoice_policy : added a option to send a mail of draft invoice.
+
+## 03/23/2021
+#### Version 13.3.0.1.5
+- [ADD] clx_task_management : added boolean for create task of the product.
