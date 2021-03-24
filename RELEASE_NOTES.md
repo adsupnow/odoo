@@ -1529,3 +1529,7 @@
 ## 03/23/2021
 #### Version 13.3.0.1.5
 - [ADD] clx_task_management : added boolean for create task of the product.
+
+## 03/22/2021
+#### Version 13.1.0.0.96
+- [FIX] clx_invoice_policy : Fixed the issue related to invoice generation from the new cron. 

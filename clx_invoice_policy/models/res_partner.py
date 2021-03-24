@@ -537,12 +537,14 @@ class Partner(models.Model):
                          ('product_id', '=', line['product_id'])
                          ], limit=1)
                     move_id = account_move_lines.move_id
+                    subscription_ids = False
                     if account_move_lines:
                         if 'line_type' in line:
                             del line['line_type']
                         draft_invoices.append(account_move_lines.move_id.id)
                         if account_move_lines.move_id:
                             new_price = account_move_lines.price_unit + line['price_unit']
+                            subscription_ids = account_move_lines.mapped('subscription_lines_ids')
                             self.env.cr.execute(
                                 "DELETE FROM account_move_line WHERE id = %s",
                                 (account_move_lines.id,))
@@ -556,6 +558,9 @@ class Partner(models.Model):
                         )
                     if move_id.invoice_line_ids.subscription_lines_ids:
                         subscription_lines = move_id.invoice_line_ids.subscription_lines_ids.ids
+                        if subscription_ids:
+                            for s_line in subscription_ids:
+                                subscription_lines.append(s_line.id)
                         for s_line in so_lines:
                             subscription_lines.append(s_line.id)
                         move_id.write(
@@ -788,7 +793,7 @@ class Partner(models.Model):
             ('is_subscribed', '=', True),
             ('clx_invoice_policy_id', '!=', False)
         ])
-        # customers = self.browse(61417)
+        # customers = self.browse(61427)
         if not customers:
             return True
         for customer in customers:
@@ -831,7 +836,7 @@ class Partner(models.Model):
                      ('subscription_lines_ids', 'in', advance_lines.ids)])
                 if account_move_lines:
                     for ad_line in advance_lines:
-                        if ad_line.id in account_move_lines.mapped('subscription_lines_ids').ids:
+                        if ad_line.id in account_move_lines.mapped('move_id').mapped('subscription_line_ids').ids:
                             advance_lines -= ad_line
                 if customer.invoice_selection == 'sol':
                     if sum(advance_lines.mapped('price_unit')) < 0:
