@@ -96,7 +96,7 @@ class GenerateInvoiceDateRange(models.TransientModel):
                      ('subscription_lines_ids', 'in', advance_lines.ids)])
                 if account_move_lines:
                     for ad_line in advance_lines:
-                        if ad_line.id in account_move_lines.mapped('subscription_lines_ids').ids:
+                        if ad_line.id in account_move_lines.mapped('move_id').mapped('subscription_line_ids').ids:
                             advance_lines -= ad_line
                 if partner_id.invoice_selection == 'sol':
                     partner_id.with_context(generate_invoice_date_range=True, start_date=start_date,

@@ -15,7 +15,6 @@ from collections import OrderedDict
 class Partner(models.Model):
     _inherit = 'res.partner'
 
-
     clx_invoice_policy_id = fields.Many2one(
         'clx.invoice.policy', string="Invoice Policy")
     is_subscribed = fields.Boolean(
@@ -618,32 +617,98 @@ class Partner(models.Model):
                         del line['line_type']
                 if prepared_lines:
                     prepared_lines = self._merge_line_same_description(prepared_lines)
-                vals = {
-                    'ref': order.client_order_ref,
-                    'type': 'out_invoice',
-                    'invoice_origin': '/'.join(so_lines.mapped('so_line_id').mapped('order_id').mapped('name')),
-                    'invoice_user_id': order.user_id.id,
-                    'narration': order.note,
-                    'partner_id': self._context.get('co_op_invoice_partner') if self._context.get(
-                        'co_op_invoice_partner') else order.partner_invoice_id.id,
-                    'fiscal_position_id': order.fiscal_position_id.id or self.property_account_position_id.id,
-                    'partner_shipping_id': order.partner_shipping_id.id,
-                    'currency_id': order.pricelist_id.currency_id.id,
-                    'invoice_payment_ref': order.reference,
-                    'invoice_payment_term_id': order.payment_term_id.id,
-                    'invoice_partner_bank_id': order.company_id.partner_id.bank_ids[:1].id,
-                    'team_id': order.team_id.id,
-                    'campaign_id': order.campaign_id.id,
-                    'medium_id': order.medium_id.id,
-                    'source_id': order.source_id.id,
-                    'invoice_line_ids': [
-                        (0, 0, x) for x in prepared_lines.values()
-                    ]
-                }
-                discount_line = self.add_discount_line(vals['invoice_line_ids'])
-                if discount_line:
-                    vals['invoice_line_ids'].append((0, 0, discount_line))
-                account_id = self.env['account.move'].create(vals)
+                if self._context.get('cofirm_sale'):
+                    vals = {
+                        'ref': order.client_order_ref,
+                        'type': 'out_invoice',
+                        'invoice_origin': '/'.join(so_lines.mapped('so_line_id').mapped('order_id').mapped('name')),
+                        'invoice_user_id': order.user_id.id,
+                        'narration': order.note,
+                        'partner_id': self._context.get('co_op_invoice_partner') if self._context.get(
+                            'co_op_invoice_partner') else order.partner_invoice_id.id,
+                        'fiscal_position_id': order.fiscal_position_id.id or self.property_account_position_id.id,
+                        'partner_shipping_id': order.partner_shipping_id.id,
+                        'currency_id': order.pricelist_id.currency_id.id,
+                        'invoice_payment_ref': order.reference,
+                        'invoice_payment_term_id': order.payment_term_id.id,
+                        'invoice_partner_bank_id': order.company_id.partner_id.bank_ids[:1].id,
+                        'team_id': order.team_id.id,
+                        'campaign_id': order.campaign_id.id,
+                        'medium_id': order.medium_id.id,
+                        'source_id': order.source_id.id,
+                        'invoice_line_ids': [
+                            (0, 0, x) for x in prepared_lines.values()
+                        ]
+                    }
+                    discount_line = self.add_discount_line(vals['invoice_line_ids'])
+                    if discount_line:
+                        vals['invoice_line_ids'].append((0, 0, discount_line))
+                    account_id = self.env['account.move'].create(vals)
+                else:
+                    # code  for the update draft invoice
+                    new_inv_list = []
+                    for line in prepared_lines:
+                        account_move_lines = self.env['account.move.line'].search(
+                            [('partner_id', '=', order.partner_id.id),
+                             ('parent_state', '=', 'draft'),
+                             ('name', '=', prepared_lines[line]['name']),
+                             ('product_id', '=', prepared_lines[line]['product_id'])
+                             ], limit=1)
+                        move_id = account_move_lines.move_id
+                        subscription_ids = False
+                        if account_move_lines:
+                            if 'line_type' in prepared_lines[line]:
+                                del prepared_lines[line]['line_type']
+                            draft_invoices.append(account_move_lines.move_id.id)
+                            if account_move_lines.move_id:
+                                new_price = account_move_lines.price_unit + prepared_lines[line]['price_unit']
+                                subscription_ids = account_move_lines.mapped('subscription_lines_ids')
+                                self.env.cr.execute(
+                                    "DELETE FROM account_move_line WHERE id = %s",
+                                    (account_move_lines.id,))
+                                account_move_lines._cr.commit()
+                                prepared_lines[line]['price_unit'] = new_price
+                                move_id.with_context(check_move_validity=False, name="name").write(
+                                    {'invoice_line_ids': [(0, 0, prepared_lines[line])]})
+                                if move_id.invoice_line_ids.subscription_lines_ids:
+                                    subscription_lines = move_id.invoice_line_ids.subscription_lines_ids.ids
+                                    if subscription_ids:
+                                        for s_line in subscription_ids:
+                                            subscription_lines.append(s_line.id)
+                                    for s_line in so_lines:
+                                        subscription_lines.append(s_line.id)
+                                    move_id.write(
+                                        {'subscription_line_ids': [(6, 0, list(set(subscription_lines)))]})
+                        else:
+                            new_inv_list.append(prepared_lines[line])
+                    if new_inv_list:
+                        vals = {
+                            'ref': order.client_order_ref,
+                            'type': 'out_invoice',
+                            'invoice_origin': '/'.join(
+                                so_lines.mapped('so_line_id').mapped('order_id').mapped('name')),
+                            'invoice_user_id': order.user_id.id,
+                            'narration': order.note,
+                            'partner_id': self._context.get('co_op_invoice_partner') if self._context.get(
+                                'co_op_invoice_partner') else order.partner_invoice_id.id,
+                            'fiscal_position_id': order.fiscal_position_id.id or self.property_account_position_id.id,
+                            'partner_shipping_id': order.partner_shipping_id.id,
+                            'currency_id': order.pricelist_id.currency_id.id,
+                            'invoice_payment_ref': order.reference,
+                            'invoice_payment_term_id': order.payment_term_id.id,
+                            'invoice_partner_bank_id': order.company_id.partner_id.bank_ids[:1].id,
+                            'team_id': order.team_id.id,
+                            'campaign_id': order.campaign_id.id,
+                            'medium_id': order.medium_id.id,
+                            'source_id': order.source_id.id,
+                            'invoice_line_ids': [
+                                (0, 0, x) for x in new_inv_list
+                            ]
+                        }
+                        discount_line = self.add_discount_line(vals['invoice_line_ids'])
+                        if discount_line:
+                            vals['invoice_line_ids'].append((0, 0, discount_line))
+                        account_id = self.env['account.move'].create(vals)
         if account_id:
             account_id.write({'subscription_line_ids': [(6, 0, so_lines.ids)]})
 
