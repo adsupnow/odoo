@@ -1537,3 +1537,7 @@
 ## 03/25/2021
 #### Version 13.1.0.0.97
 - [FIX] clx_invoice_policy : fixed the issue in invoice generating in post all invoices after do upsell and downsell.
+
+## 03/23/2021
+#### Version 13.3.0.1.6
+- [ADD] clx_task_management : added proof returned count field and history table for that.
