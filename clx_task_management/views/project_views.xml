@@ -12,6 +12,8 @@
             <xpath expr="//field[@name='project_id']" position="after">
                 <field name="partner_id"/>
                 <field name="parent_id"/>
+                <field name="create_date" string="Task Creation Date"/>
+                <field name="task_complete_date"/>
                 <field name="team_ids" widget="many2many_tags" optional="show"/>
                 <field name="team_members_ids" widget="many2many_tags" optional="show"/>
                 <!--<field name="tag_ids" widget="many2many_tags" optional="show"/>-->
@@ -34,7 +36,8 @@
             </xpath>
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="deadline"/>
-                <field name="create_date"/>
+                <field name="create_date" string="Project Creation Date"/>
+                <field name="completion_date"/>
                 <field name="priority"/>
                 <field name="client_services_team"/>
             </xpath>
@@ -143,6 +146,8 @@
                 <field name="clx_priority"/>
                 <field name="client_services_team"/>
                 <field name="proof_return_count" readonly="1"/>
+                <field name="create_date" string="Task creation Date"/>
+                <field name="task_complete_date"/>
             </field>
             <field name="user_id" position="attributes">
                 <attribute name="invisible">1</attribute>

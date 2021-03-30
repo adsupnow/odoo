@@ -12,6 +12,7 @@ class ProjectTaskType(models.Model):
     _inherit = 'project.task.type'
 
     demo_data = fields.Boolean()
+    active = fields.Boolean()
 
 
 class ProjectProject(models.Model):
@@ -38,6 +39,7 @@ class ProjectProject(models.Model):
     )
     implementation_specialist_id = fields.Many2one(related="partner_id.implementation_specialist_id")
     user_id = fields.Many2one('res.users', string='Account Manager', default=lambda self: self.env.user, tracking=True)
+    completion_date = fields.Datetime(string="Project Completion Date")
 
     def write(self, vals):
         res = super(ProjectProject, self).write(vals)
@@ -67,6 +69,7 @@ class ProjectProject(models.Model):
         complete_stage = self.env.ref('clx_task_management.clx_project_stage_8')
         if all(task.stage_id.id == complete_stage.id for task in self.task_ids):
             self.clx_state = 'done'
+            self.completion_date = fields.Datetime.today()
         else:
             raise UserError(_("Please Complete All the Task First!!"))
 
@@ -124,6 +127,8 @@ class ProjectTask(models.Model):
                               index=True, tracking=True)
     proof_return_count = fields.Integer(string="Proof Return Count", default=0)
     proof_return_ids = fields.One2many('task.proof.return', 'task_id', string="Proof Return History")
+    task_complete_date = fields.Datetime(string="Task Complete Date")
+    sub_task_complate_date = fields.Datetime(string="Sub Task Complete Date")
 
     def _compute_sub_task_project_ids(self):
         task_list = []
@@ -323,6 +328,7 @@ class ProjectTask(models.Model):
         stage_id = self.env['project.task.type'].browse(vals.get('stage_id'))
         cancel_stage = self.env.ref('clx_task_management.clx_project_stage_9')
         if vals.get('stage_id', False) and stage_id.id == complete_stage.id:
+            self.task_complete_date = fields.Datetime.today()
             if self.sub_task_id:
                 parent_task_main_task = self.project_id.task_ids.mapped('sub_task_id').mapped('parent_id')
                 dependency_tasks = sub_task_obj.search(

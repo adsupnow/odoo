@@ -1541,3 +1541,7 @@
 ## 03/23/2021
 #### Version 13.3.0.1.6
 - [ADD] clx_task_management : added proof returned count field and history table for that.
+
+## 03/30/2021
+#### Version 13.3.0.1.7
+- [ADD] clx_task_management : added proof count report and added task creation date and end date, project start date and project end date.
