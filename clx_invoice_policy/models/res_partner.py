@@ -671,12 +671,13 @@ class Partner(models.Model):
                                 move_id.with_context(check_move_validity=False, name="name").write(
                                     {'invoice_line_ids': [(0, 0, prepared_lines[line])]})
                                 if move_id.invoice_line_ids.subscription_lines_ids:
-                                    subscription_lines = move_id.invoice_line_ids.subscription_lines_ids.ids
+                                    subscription_lines = move_id.subscription_line_ids.ids
                                     if subscription_ids:
                                         for s_line in subscription_ids:
                                             subscription_lines.append(s_line.id)
-                                    for s_line in so_lines:
-                                        subscription_lines.append(s_line.id)
+                                    for su_line in so_lines.filtered(
+                                            lambda x: x.product_id.id == prepared_lines[line]['product_id']):
+                                        subscription_lines.append(su_line.id)
                                     move_id.write(
                                         {'subscription_line_ids': [(6, 0, list(set(subscription_lines)))]})
                         else:
