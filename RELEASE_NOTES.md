@@ -1450,6 +1450,7 @@
 #### Version 13.1.0.0.78
 - [ADD] clx_invoice_policy : Merger 2 sale order lines in invoice if those lines have same description.
 
+
 ## 02/26/2021
 #### Version 13.1.0.0.79
 - [ADD] clx_invoice_policy : fix the rebate calculation issue for sale order line wise invoice.
@@ -1545,3 +1546,7 @@
 ## 03/30/2021
 #### Version 13.3.0.1.7
 - [ADD] clx_task_management : added proof count report and added task creation date and end date, project start date and project end date.
+
+## 03/22/2021
+#### Version 13.3.0.1.3
+- [FIX] clx_task_management : fixed the issue related to demo data.
