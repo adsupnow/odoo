@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
+
+    <record id="task_type_edit_inherit_clx_task_management" model="ir.ui.view">
+        <field name="name">project.task.type.form</field>
+        <field name="model">project.task.type</field>
+        <field name="inherit_id" ref="project.task_type_edit"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='fold']" position="after">
+                <field name="active"/>
+            </xpath>
+
+        </field>
+    </record>
+
     <record id="view_task_tree2_inherit_clx_task_management" model="ir.ui.view">
         <field name="name">project.task.tree</field>
         <field name="model">project.task</field>
@@ -34,7 +48,7 @@
         <field name="name">project.project.tree</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.view_project"/>
-        <field name="arch" type="xml">            
+        <field name="arch" type="xml">
             <xpath expr="//field[@name='user_id']" position="after">
                 <field name="clx_project_manager_id"/>
                 <field name="ops_team_member_id"/>

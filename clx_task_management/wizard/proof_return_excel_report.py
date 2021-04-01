@@ -9,7 +9,6 @@ import io
 import xlsxwriter
 
 
-
 class ProofReturnExcelReport(models.TransientModel):
     _name = 'proof.return.excel.report'
     _description = "proof return excel report"
@@ -17,6 +16,15 @@ class ProofReturnExcelReport(models.TransientModel):
     team_id = fields.Many2many('clx.team')
     start_date = fields.Date(string="Start Date")
     end_date = fields.Date(string="End Date")
+
+    @api.model
+    def default_get(self, fields):
+        result = super(ProofReturnExcelReport, self).default_get(fields)
+        teams = self.env['clx.team'].search([])
+        if teams:
+            self.team_id = teams.ids
+            result.update({'team_id': teams.ids})
+        return result
 
     @api.onchange('start_date', 'end_date')
     def onchange_date_validation(self):

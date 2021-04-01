@@ -8,14 +8,15 @@
             <form>
                 <sheet>
                     <group>
-                        <field name="team_id" widget="many2many_tags" required="1"/>
+                        <field name="team_id" widget="many2many_tags" required="0"/>
                         <field name="start_date" required="0"/>
                         <field name="end_date" required="0"/>
+                        <!--<button name="set_all_team" string="Set All Team" type="object"/>-->
                     </group>
                     <footer>
-                    <button name="download_report" string="Download Report" type="object" class="btn-primary"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel"/>
-                </footer>
+                        <button name="download_report" string="Download Report" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
                 </sheet>
             </form>
         </field>
