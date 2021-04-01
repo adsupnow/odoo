@@ -1550,3 +1550,8 @@
 ## 03/22/2021
 #### Version 13.3.0.1.3
 - [FIX] clx_task_management : fixed the issue related to demo data.
+
+
+## 04/01/2021
+#### Version 13.1.0.0.99
+- [FIX] clx_invoice_policy : fixed the issue related to rebate line discount. 

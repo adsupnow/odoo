@@ -17,7 +17,7 @@
                 <field name="partner_id"/>
                 <field name="parent_id"/>
                 <field name="create_date" string="Task Creation Date"/>
-                <field name="task_complete_date"/>
+                <field name="task_complete_date" readonly="1"/>
                 <field name="team_ids" widget="many2many_tags" optional="show"/>
                 <field name="team_members_ids" widget="many2many_tags" optional="show"/>
                 <!--<field name="tag_ids" widget="many2many_tags" optional="show"/>-->
@@ -160,7 +160,7 @@
                 <field name="client_services_team"/>
                 <field name="proof_return_count" readonly="1"/>
                 <field name="create_date" string="Task creation Date"/>
-                <field name="task_complete_date"/>
+                <field name="task_complete_date" readonly="1"/>
             </field>
             <field name="user_id" position="attributes">
                 <attribute name="invisible">1</attribute>
@@ -247,6 +247,7 @@
                         <field name="proof_return_ids" nolabel="1">
                             <tree>
                                 <field name="team_id"/>
+                                <field name="create_date"/>
                                 <field name="proof_return_count"/>
                             </tree>
                         </field>
