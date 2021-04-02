@@ -1554,4 +1554,8 @@
 
 ## 04/01/2021
 #### Version 13.1.0.0.99
-- [FIX] clx_invoice_policy : fixed the issue related to rebate line discount. 
+- [FIX] clx_invoice_policy : fixed the issue related to rebate line discount.
+
+## 04/02/2021
+#### Version 13.3.0.1.10
+- [ADD] clx_task_management : added excel report for project and task.

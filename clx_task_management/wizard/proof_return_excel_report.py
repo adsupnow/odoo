@@ -56,7 +56,7 @@ class ProofReturnExcelReport(models.TransientModel):
         worksheet.write(row, 2, 'Sub Task', header_format)
         worksheet.write(row, 3, 'Team', header_format)
         worksheet.write(row, 4, 'Date', header_format)
-        worksheet.write(row, 5, 'Proof Count', header_format)
+        worksheet.write(row, 5, 'Proof Count Number', header_format)
         row += 1
         col = 0
         for task in tasks:

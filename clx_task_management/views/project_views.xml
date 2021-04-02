@@ -6,11 +6,9 @@
         <field name="model">project.task.type</field>
         <field name="inherit_id" ref="project.task_type_edit"/>
         <field name="arch" type="xml">
-
             <xpath expr="//field[@name='fold']" position="after">
                 <field name="active"/>
             </xpath>
-
         </field>
     </record>
 
@@ -430,4 +428,14 @@
 
     <menuitem name="All Tasks" id="menu_parent_task" parent="project.menu_main_pm"
               action="clx_task_management.action_view_parent_task" sequence="1"/>
+
+    <act_window id="project_excel_report_action" name="Projects Excel Report"
+        res_model="project.excel.report"
+        binding_model="project.project" binding_views="list"
+        view_mode="form" target="new"/>
+
+    <act_window id="project_task_excel_report_action" name="Projects Excel Report"
+        res_model="project.task.excel.report"
+        binding_model="project.task" binding_views="list"
+        view_mode="form" target="new"/>
 </odoo>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="view_project_excel_report_form" model="ir.ui.view">
+        <field name="name">Project Excel</field>
+        <field name="model">project.excel.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <footer>
+                        <button name="download_report" string="Download Report" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_project_task_excel_report_form" model="ir.ui.view">
+        <field name="name">Project Task Excel</field>
+        <field name="model">project.task.excel.report</field>
+        <field name="arch" type="xml">
+            <form>
+               <sheet>
+                    <footer>
+                        <button name="download_report" string="Download Report" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_project_excel_report" model="ir.actions.act_window">
+        <field name="name">Project Excel Report</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">project.excel.report</field>
+        <field name="view_mode">form</field>
+    </record>
+
+    <record id="action_project_task_excel_report" model="ir.actions.act_window">
+        <field name="name">Project Task Excel Report</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">project.task.excel.report</field>
+        <field name="view_mode">form</field>
+    </record>
+</odoo>
