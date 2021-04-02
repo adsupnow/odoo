@@ -434,7 +434,7 @@
         binding_model="project.project" binding_views="list"
         view_mode="form" target="new"/>
 
-    <act_window id="project_task_excel_report_action" name="Projects Excel Report"
+    <act_window id="project_task_excel_report_action" name="Tasks Excel Report"
         res_model="project.task.excel.report"
         binding_model="project.task" binding_views="list"
         view_mode="form" target="new"/>
