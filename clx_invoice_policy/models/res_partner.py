@@ -171,11 +171,11 @@ class Partner(models.Model):
                 for inv_line in draft_invoice.invoice_line_ids.filtered(lambda x: "Rebate" not in x.name):
                     if self.management_company_type_id:
                         flat_discount = self.management_company_type_id.flat_discount
-                        if self.management_company_type_id.clx_category_id and inv_line.category_id.id == self.management_company_type_id.clx_category_id.id:
+                        if self.management_company_type_id.is_flat_discount and self.management_company_type_id.clx_category_id and inv_line.category_id.id == self.management_company_type_id.clx_category_id.id:
+                            total_discount += flat_discount
+                        else:
                             total_discount += (
                                                       inv_line.price_unit * self.management_company_type_id.discount_on_order_line) / 100
-                        else:
-                            total_discount += flat_discount
                 if total_discount:
                     rebate_line = draft_invoice.invoice_line_ids.filtered(lambda x: "Rebate" in x.name)
                     receivable_line = draft_invoice.line_ids.filtered(
@@ -217,12 +217,12 @@ class Partner(models.Model):
         for inv_val in invoice_line_ids:
             if self.management_company_type_id:
                 flat_discount = self.management_company_type_id.flat_discount
-                if self.management_company_type_id.clx_category_id and inv_val[-1][
+                if self.management_company_type_id.is_flat_discount and self.management_company_type_id.clx_category_id and inv_val[-1][
                     'category_id'] == self.management_company_type_id.clx_category_id.id:
+                    total_discount += flat_discount
+                else:
                     total_discount += (inv_val[-1][
                                            'price_unit'] * self.management_company_type_id.discount_on_order_line) / 100
-                else:
-                    total_discount += flat_discount
         if total_discount:
             discount_line.update({'price_unit': -abs(total_discount),
                                   'category_id': False,

@@ -1559,3 +1559,7 @@
 ## 04/02/2021
 #### Version 13.3.0.1.10
 - [ADD] clx_task_management : added excel report for project and task.
+
+## 04/05/2021
+#### Version 13.1.0.0.100
+- [FIX] clx_invoice_policy : fixed the discount related issue.
