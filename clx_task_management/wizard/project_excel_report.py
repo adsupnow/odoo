@@ -25,7 +25,8 @@ class ProjectTaskExcelReport(models.TransientModel):
         col = 0
         headers = ['Title', 'Project Name', 'Customer', 'Account Manager', 'CS Team Member', 'Ops Team Member',
                    'CAT Team Member', 'Team', 'Team Members', 'Tags', 'Task Creation Date',
-                   'Task Completion Date', 'Deadline', 'Priority', 'Client Services Team', 'State'
+                   'Task Completion Date', 'Deadline', 'Priority', 'Client Services Team', 'State',
+                   'Total Days Task complete'
                    ]
         for header in headers:
             worksheet.write(row, col, header, header_format)
@@ -51,6 +52,8 @@ class ProjectTaskExcelReport(models.TransientModel):
             worksheet.write(row, col + 13, task.clx_priority)
             worksheet.write(row, col + 14, task.client_services_team)
             worksheet.write(row, col + 15, task.stage_id.name)
+            worksheet.write(row, col + 16,
+                            task.task_complete_date - task.create_date if task.task_complete_date and task.create_date else False)
             row += 1
         workbook.close()
         fp.seek(0)
@@ -87,7 +90,7 @@ class ProjectExcelReport(models.TransientModel):
         col = 0
         headers = ['Project Name', 'Customer', 'Account Manager', 'CS Team Member', 'Ops Team Member',
                    'CAT Team Member', 'Project Creation Date', 'Project Completion Date', 'Deadline', 'Priority',
-                   'Client Services Team', 'State'
+                   'Client Services Team', 'State', "Total Days Project complete"
                    ]
         for header in headers:
             worksheet.write(row, col, header, header_format)
@@ -106,10 +109,12 @@ class ProjectExcelReport(models.TransientModel):
             worksheet.write(row, col + 6, project.create_date.strftime("%m/%d/%Y, %H:%M:%S"))
             worksheet.write(row, col + 7,
                             project.completion_date.strftime("%m/%d/%Y, %H:%M:%S") if project.completion_date else " ")
-            worksheet.write(row, col + 8, project.deadline.strftime("%m/%d/%Y"))
+            worksheet.write(row, col + 8, project.deadline.strftime("%m/%d/%Y") if project.deadline else " ")
             worksheet.write(row, col + 9, project.priority)
             worksheet.write(row, col + 10, project.client_services_team)
             worksheet.write(row, col + 11, project.clx_state)
+            worksheet.write(row, col + 12,
+                            project.completion_date - project.create_date if project.completion_date and project.create_date else False)
             row += 1
         workbook.close()
         fp.seek(0)

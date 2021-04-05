@@ -1563,3 +1563,7 @@
 ## 04/05/2021
 #### Version 13.1.0.0.100
 - [FIX] clx_invoice_policy : fixed the discount related issue.
+
+## 04/02/2021
+#### Version 13.3.0.1.12
+- [ADD] clx_task_management : Added total days of calculation in project and task report.
