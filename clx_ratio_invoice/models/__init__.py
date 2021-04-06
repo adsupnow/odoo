@@ -4,3 +4,4 @@
 
 from . import co_op_sale_order_partner
 from . import sale_order
+from . import sale_subscription
