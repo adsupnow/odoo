@@ -647,6 +647,7 @@ class Partner(models.Model):
                 else:
                     # code  for the update draft invoice
                     new_inv_list = []
+                    draft_invoices = []
                     for line in prepared_lines:
                         account_move_lines = self.env['account.move.line'].search(
                             [('partner_id', '=', order.partner_id.id),
@@ -710,6 +711,11 @@ class Partner(models.Model):
                         if discount_line:
                             vals['invoice_line_ids'].append((0, 0, discount_line))
                         account_id = self.env['account.move'].create(vals)
+                    # write code for the update rebate discount line for all invoices
+                    if draft_invoices:
+                        draft_invoices = account_obj.browse(draft_invoices)
+                        if draft_invoices:
+                            self.update_rebate_discount(draft_invoices)
         if account_id:
             account_id.write({'subscription_line_ids': [(6, 0, so_lines.ids)]})
 
