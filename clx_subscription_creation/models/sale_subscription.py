@@ -9,6 +9,9 @@ from datetime import date
 class SaleSubscription(models.Model):
     _inherit = "sale.subscription"
     is_active = fields.Boolean(string="Active", default=True)
+    is_co_op = fields.Boolean(string="Co-op")
+    co_op_percentage = fields.Float(string="Co Op Percentage")
+    active = fields.Boolean(string="Active", default=True)
 
     def deactivate_finished_subscriptins(self):
         today = date.today()
@@ -120,3 +123,4 @@ class SaleSubscriptionLine(models.Model):
         related="so_line_id.management_price", string='Management Price')
     wholesale_price = fields.Float(
         related="so_line_id.wholesale_price", string='Wholesale Price')
+    active = fields.Boolean(string="Active", default=True)

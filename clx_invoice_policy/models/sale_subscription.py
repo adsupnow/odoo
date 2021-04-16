@@ -12,7 +12,7 @@ from odoo import fields, models, api, _
 from calendar import monthrange
 
 
-class SaleSubscription(models.Model):
+class SaleSubscript_prepare_invoice_lineion(models.Model):
     _inherit = "sale.subscription"
 
     clx_invoice_policy_id = fields.Many2one(
@@ -56,10 +56,10 @@ class SaleSubscription(models.Model):
         pricelist_flat = self.pricelist_flatten(price_list)
         pricelist2process = {}
         tags = [str(price_list.id) + '_0_' + str(product.id),
-        str(price_list.id) + '_1_' + \
-            str(0 if 'product_tmpl_id' not in product else product.product_tmpl_id.id),
-        str(price_list.id) + '_2_' + str(product.categ_id.id),
-        str(price_list.id) + '_3', list(pricelist_flat.keys())[0]]
+                str(price_list.id) + '_1_' + \
+                str(0 if 'product_tmpl_id' not in product else product.product_tmpl_id.id),
+                str(price_list.id) + '_2_' + str(product.categ_id.id),
+                str(price_list.id) + '_3', list(pricelist_flat.keys())[0]]
         for tag in tags:
             if tag in pricelist_flat:
                 pricelist2process = pricelist_flat[tag]
@@ -84,9 +84,9 @@ class SaleSubscription(models.Model):
             if price_list.is_percentage and price_list.percent_mgmt_price:
                 management_fee = round(
                     (price_list.percent_mgmt_price * retail) / 100, 2)
-        #but never less than minimum price 
+        # but never less than minimum price
         if management_fee < price_list.fixed_mgmt_price:
-            management_fee = price_list.fixed_mgmt_price 
+            management_fee = price_list.fixed_mgmt_price
         return {'management_fee': management_fee, 'wholesale_price': retail - management_fee}
 
     def pricelist_flatten(self, price_list):
@@ -139,10 +139,11 @@ class SaleSubscriptionLine(models.Model):
 
     def get_subscription_line_retail_period(self, subscription_line, start_date, end_date):
         final_price = 0
-        if subscription_line.start_date <= end_date and (not subscription_line.end_date or (subscription_line.end_date and subscription_line.end_date >= start_date)):
+        if subscription_line.start_date <= end_date and (not subscription_line.end_date or (
+                subscription_line.end_date and subscription_line.end_date >= start_date)):
             final_price = subscription_line.price_unit
             if start_date <= subscription_line.start_date and subscription_line.prorate_amount:
-                final_price = subscription_line.prorate_amount 
+                final_price = subscription_line.prorate_amount
             if subscription_line.prorate_end_amount and subscription_line.end_date <= end_date:
                 final_price = subscription_line.prorate_end_amount
         return final_price
@@ -170,7 +171,7 @@ class SaleSubscriptionLine(models.Model):
                                     range((self.end_date - budget_lines[0].end_date).days)))
                 if month_diff and budget_lines:
                     start_date = budget_lines[0].end_date + \
-                        relativedelta(days=1)
+                                 relativedelta(days=1)
                     start_date.replace(day=monthrange(
                         start_date.year, start_date.month)[1])
                     for i in range(0, month_diff):
@@ -456,4 +457,9 @@ class SaleSubscriptionLine(models.Model):
                             {'description': line.product_id.budget_wrapping_auto_local})
         else:
             res.update({'description': line.product_id.categ_id.name})
+        if self._context.get('co_op', False):
+            price_unit = (res['price_unit'] * self._context.get('percantage')) / 100
+            res.update({
+                'price_unit': price_unit
+            })
         return res

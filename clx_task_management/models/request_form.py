@@ -14,6 +14,7 @@ class RequestForm(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
+
     name = fields.Char(string='Name', copy=False)
     partner_id = fields.Many2one('res.partner', string='Customer')
     request_date = fields.Datetime('Request Submission Date', default=datetime.datetime.today(), copy=False)
@@ -44,6 +45,7 @@ class RequestForm(models.Model):
         this method is used for open Active sale order of the particular customer from the request form.
         :return: action of sale order
         """
+
         action = self.env.ref('clx_task_management.action_sale_subscription_line').read()[0]
         today = fields.Date.today()
         subscriptions = self.env['sale.subscription'].search([('partner_id', '=', self.partner_id.id)])
