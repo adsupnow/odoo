@@ -11,7 +11,7 @@ class SaleSubscription(models.Model):
     is_active = fields.Boolean(string="Active", default=True)
     is_co_op = fields.Boolean(string="Co-op")
     co_op_percentage = fields.Float(string="Co Op Percentage")
-    active = fields.Boolean(string="Active", default=True)
+    active = fields.Boolean(string="Co-op Active", default=True)
 
     def deactivate_finished_subscriptins(self):
         today = date.today()
