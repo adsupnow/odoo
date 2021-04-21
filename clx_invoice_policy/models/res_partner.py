@@ -11,7 +11,6 @@ from dateutil import parser
 from calendar import monthrange
 from collections import OrderedDict
 
-
 class Partner(models.Model):
     _inherit = 'res.partner'
 
@@ -35,7 +34,8 @@ class Partner(models.Model):
         related="management_company_type_id.invoice_selection", string="Display on")
 
     def generate_invoice_with_date_range(self):
-        view_id = self.env.ref('clx_invoice_policy.generate_invoice_date_range_form_view').id
+        view_id = self.env.ref(
+            'clx_invoice_policy.generate_invoice_date_range_form_view').id
         return {'type': 'ir.actions.act_window',
                 'name': _('Generate Invoice Date range'),
                 'res_model': 'generate.invoice.date.range',
@@ -94,20 +94,24 @@ class Partner(models.Model):
                 a = advance_lines.ids
                 for invoice_line in invoice_lines:
                     if "Invoicing period" in invoice_line.name:
-                        start_date = invoice_line.name.split(':')[-1].split('-')[0]
+                        start_date = invoice_line.name.split(
+                            ':')[-1].split('-')[0]
                         start_date = parser.parse(start_date)
                         new_line = advance_lines.filtered(
                             lambda x: x.product_id.categ_id.id == invoice_line.category_id.id
-                                      and x.invoice_start_date == start_date.date()
-                                      and invoice_line.move_id.state == 'draft')
+                            and x.invoice_start_date == start_date.date()
+                            and invoice_line.move_id.state == 'draft')
                         if new_line and new_line[0].id in a:
                             a.remove(new_line[0].id)
-                            start = new_line[0].invoice_start_date + relativedelta(months=1)
-                            end = start.replace(day=monthrange(start.year, start.month)[1])
+                            start = new_line[0].invoice_start_date + \
+                                relativedelta(months=1)
+                            end = start.replace(day=monthrange(
+                                start.year, start.month)[1])
                             new_line[0].invoice_start_date = start
                             new_line[0].invoice_end_date = end
                 if a:
-                    advance_lines = self.env['sale.subscription.line'].browse(a)
+                    advance_lines = self.env['sale.subscription.line'].browse(
+                        a)
             advance_lines = advance_lines + not_base_lines
             if self._context.get('check_invoice_start_date', False):
                 unique_date_list = list(set(advance_lines.mapped('invoice_start_date')))
@@ -149,12 +153,18 @@ class Partner(models.Model):
                     base_lines.update({line['description']: line})
                 else:
                     base_lines[line['description']]['quantity'] = 1
-                    base_lines[line['description']]['price_unit'] += line['price_unit']
-                    base_lines[line['description']]['tax_ids'][0][2].extend(line['tax_ids'][0][2])
-                    base_lines[line['description']]['analytic_account_id'] = line['analytic_account_id']
-                    base_lines[line['description']]['analytic_tag_ids'][0][2].extend(line['analytic_tag_ids'][0][2])
-                    base_lines[line['description']]['subscription_ids'][0][2].extend(line['subscription_ids'][0][2])
-                    base_lines[line['description']]['subscription_lines_ids'].extend(line['subscription_lines_ids'])
+                    base_lines[line['description']
+                               ]['price_unit'] += line['price_unit']
+                    base_lines[line['description']]['tax_ids'][0][2].extend(
+                        line['tax_ids'][0][2])
+                    base_lines[line['description']
+                               ]['analytic_account_id'] = line['analytic_account_id']
+                    base_lines[line['description']]['analytic_tag_ids'][0][2].extend(
+                        line['analytic_tag_ids'][0][2])
+                    base_lines[line['description']]['subscription_ids'][0][2].extend(
+                        line['subscription_ids'][0][2])
+                    base_lines[line['description']]['subscription_lines_ids'].extend(
+                        line['subscription_lines_ids'])
         return base_lines
 
     def update_rebate_discount(self, draft_inv):
@@ -247,35 +257,36 @@ class Partner(models.Model):
 
         today = date.today()
         yearly_lines = lines.filtered(lambda
-                                          x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'yearly')
+                                      x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'yearly')
         yearly_lines = yearly_lines.filtered(
             lambda sol: (sol.invoice_start_date and
                          sol.invoice_end_date and
                          sol.invoice_start_date <= today and
                          sol.invoice_end_date >= today
                          ) or (
-                                sol.end_date and sol.end_date < today and not sol.last_invoiced and
-                                sol.line_type != 'base'
-                        )
+                sol.end_date and sol.end_date < today and not sol.last_invoiced and
+                sol.line_type != 'base'
+            )
         )
         if self._context.get('cofirm_sale', False):
             yearly_lines = lines.filtered(lambda
-                                              x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'yearly')
+                                          x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'yearly')
         if self._context.get('generate_invoice_date_range', False):
             yearly_lines = lines.filtered(lambda
-                                              x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'yearly')
+                                          x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'yearly')
         yearly_prepared_lines = [line.with_context({
             'advance': True
         })._prepare_invoice_line() for line in yearly_lines]
 
         so_lines = lines.filtered(lambda
-                                      x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'monthly')
+                                  x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'monthly')
         if self._context.get('generate_invoice_date_range'):
             so_lines = lines.filtered(lambda
-                                          x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'monthly')
+                                      x: x.product_id.subscription_template_id and x.product_id.subscription_template_id.recurring_rule_type == 'monthly')
         if not so_lines and not yearly_lines:
             if self._context.get('from_generate_invoice'):
-                raise UserError(_("You must have a sales order to create an invoice"))
+                raise UserError(
+                    _("You must have a sales order to create an invoice"))
             return self
         base_lines = {}
         upsell_lines = {}
@@ -308,10 +319,13 @@ class Partner(models.Model):
             for y_line in yearly_prepared_lines:
                 prepared_lines.append(y_line)
         for pre_line in prepared_lines:
-            sub_lines = so_lines.filtered(lambda x: x.product_id.id == pre_line['product_id'])
+            sub_lines = so_lines.filtered(
+                lambda x: x.product_id.id == pre_line['product_id'])
             pre_line.update({
                 'subscription_lines_ids': sub_lines.ids if sub_lines else False
             })
+        # the regrouping lines
+        self.env['sale.order'].grouping_by_product_set(prepared_lines, True)
         account_id = False
         if not self._context.get('sol'):
             for line in prepared_lines:
@@ -324,12 +338,18 @@ class Partner(models.Model):
                         # if line_type != 'base':
                         #     base_lines[line['category_id']]['name'] += "\n%s" % line['name']
                         base_lines[line['category_id']]['quantity'] = 1
-                        base_lines[line['category_id']]['price_unit'] += line['price_unit']
-                        base_lines[line['category_id']]['tax_ids'][0][2].extend(line['tax_ids'][0][2])
-                        base_lines[line['category_id']]['analytic_account_id'] = line['analytic_account_id']
-                        base_lines[line['category_id']]['analytic_tag_ids'][0][2].extend(line['analytic_tag_ids'][0][2])
-                        base_lines[line['category_id']]['subscription_ids'][0][2].extend(line['subscription_ids'][0][2])
-                        base_lines[line['category_id']]['subscription_lines_ids'].extend(line['subscription_lines_ids'])
+                        base_lines[line['category_id']
+                                   ]['price_unit'] += line['price_unit']
+                        base_lines[line['category_id']]['tax_ids'][0][2].extend(
+                            line['tax_ids'][0][2])
+                        base_lines[line['category_id']
+                                   ]['analytic_account_id'] = line['analytic_account_id']
+                        base_lines[line['category_id']]['analytic_tag_ids'][0][2].extend(
+                            line['analytic_tag_ids'][0][2])
+                        base_lines[line['category_id']]['subscription_ids'][0][2].extend(
+                            line['subscription_ids'][0][2])
+                        base_lines[line['category_id']]['subscription_lines_ids'].extend(
+                            line['subscription_lines_ids'])
                 elif line_type == 'upsell':
                     if line['category_id'] not in upsell_lines:
                         upsell_lines.update({line['category_id']: line})
@@ -337,10 +357,14 @@ class Partner(models.Model):
                         # if line_type != 'base':
                         #     base_lines[line['category_id']]['name'] += "\n%s" % line['name']
                         upsell_lines[line['category_id']]['quantity'] = 1
-                        upsell_lines[line['category_id']]['discount'] = line['discount']
-                        upsell_lines[line['category_id']]['price_unit'] += line['price_unit']
-                        upsell_lines[line['category_id']]['tax_ids'][0][2].extend(line['tax_ids'][0][2])
-                        upsell_lines[line['category_id']]['analytic_account_id'] = line['analytic_account_id']
+                        upsell_lines[line['category_id']
+                                     ]['discount'] = line['discount']
+                        upsell_lines[line['category_id']
+                                     ]['price_unit'] += line['price_unit']
+                        upsell_lines[line['category_id']]['tax_ids'][0][2].extend(
+                            line['tax_ids'][0][2])
+                        upsell_lines[line['category_id']
+                                     ]['analytic_account_id'] = line['analytic_account_id']
                         upsell_lines[line['category_id']]['analytic_tag_ids'][0][2].extend(
                             line['analytic_tag_ids'][0][2])
                         upsell_lines[line['category_id']]['subscription_ids'][0][2].extend(
@@ -354,10 +378,14 @@ class Partner(models.Model):
                         # if line_type != 'base':
                         #     base_lines[line['category_id']]['name'] += "\n%s" % line['name']
                         downsell_lines[line['category_id']]['quantity'] = 1
-                        downsell_lines[line['category_id']]['discount'] = line['discount']
-                        downsell_lines[line['category_id']]['price_unit'] += line['price_unit']
-                        downsell_lines[line['category_id']]['tax_ids'][0][2].extend(line['tax_ids'][0][2])
-                        downsell_lines[line['category_id']]['analytic_account_id'] = line['analytic_account_id']
+                        downsell_lines[line['category_id']
+                                       ]['discount'] = line['discount']
+                        downsell_lines[line['category_id']
+                                       ]['price_unit'] += line['price_unit']
+                        downsell_lines[line['category_id']]['tax_ids'][0][2].extend(
+                            line['tax_ids'][0][2])
+                        downsell_lines[line['category_id']
+                                       ]['analytic_account_id'] = line['analytic_account_id']
                         downsell_lines[line['category_id']]['analytic_tag_ids'][0][2].extend(
                             line['analytic_tag_ids'][0][2])
                         downsell_lines[line['category_id']]['subscription_ids'][0][2].extend(
@@ -435,6 +463,7 @@ class Partner(models.Model):
                             (0, 0, x) for x in downsell_lines.values()
                         ],
                 })
+
             # discount_line = self.add_discount_line(vals['invoice_line_ids'])
             account_move_lines_posted = False
             account_obj = self.env['account.move']
@@ -502,25 +531,11 @@ class Partner(models.Model):
                 account_id = self.env['account.move'].create(vals)
             if account_id and account_id.invoice_line_ids:
                 for inv_line in account_id.invoice_line_ids:
-                    price_list = inv_line.mapped('sale_line_ids').mapped('order_id').mapped('pricelist_id')
+                    price_list = inv_line.mapped('sale_line_ids').mapped(
+                        'order_id').mapped('pricelist_id')
                     if price_list:
-                        rule = price_list[0].item_ids.filtered(lambda x: x.categ_id.id == inv_line.category_id.id)
-                        if rule:
-                            percentage_management_price = custom_management_price = 0.0
-                            if rule.is_percentage:
-                                percentage_management_price = inv_line.price_unit * (
-                                        (rule.percent_mgmt_price or 0.0) / 100.0)
-                            if rule.is_custom and inv_line.price_unit > rule.min_retail_amount:
-                                custom_management_price = inv_line.price_unit * (
-                                        (rule.percent_mgmt_price or 0.0) / 100.0)
-                            inv_line.management_fees = max(percentage_management_price,
-                                                           custom_management_price,
-                                                           rule.fixed_mgmt_price)
-                            if rule.is_wholesale_percentage:
-                                inv_line.wholesale = inv_line.price_unit * (
-                                        (rule.percent_wholesale_price or 0.0) / 100.0)
-                            if rule.is_wholesale_formula:
-                                inv_line.wholesale = inv_line.price_unit - inv_line.management_fees
+                        rule = price_list[0].item_ids.filtered(
+                            lambda x: x.categ_id.id == inv_line.category_id.id)
         else:
             # create invoice as per the order lines
             order = so_lines[0].so_line_id.order_id
@@ -541,6 +556,7 @@ class Partner(models.Model):
                         if 'line_type' in line:
                             del line['line_type']
                         draft_invoices.append(account_move_lines.move_id.id)
+
                         if account_move_lines.move_id:
                             new_price = account_move_lines.price_unit + line['price_unit']
                             subscription_ids = account_move_lines.mapped('subscription_lines_ids')
@@ -723,14 +739,15 @@ class Partner(models.Model):
         today = date.today()
         so_lines = lines.filtered(
             lambda sol: (not sol.end_date or (
-                    sol.end_date and sol.end_date >= today
+                sol.end_date and sol.end_date >= today
             )) and sol.start_date <= today and (
-                                not sol.last_invoiced or
-                                sol.last_invoiced.month != today.month)
+                not sol.last_invoiced or
+                sol.last_invoiced.month != today.month)
         )
         if not so_lines:
             if self._context.get('from_generate_invoice'):
-                raise UserError(_("You must have a sales order to create an invoice"))
+                raise UserError(
+                    _("You must have a sales order to create an invoice"))
             return self
         invoice_lines = {}
 
@@ -753,12 +770,18 @@ class Partner(models.Model):
                             line['name']
                         })
                     invoice_lines[line['category_id']]['quantity'] = 1
-                    invoice_lines[line['category_id']]['discount'] += line['discount']
-                    invoice_lines[line['category_id']]['price_unit'] += line['price_unit']
-                    invoice_lines[line['category_id']]['tax_ids'][0][2].extend(line['tax_ids'][0][2])
-                    invoice_lines[line['category_id']]['analytic_account_id'] = line['analytic_account_id']
-                    invoice_lines[line['category_id']]['analytic_tag_ids'][0][2].extend(line['analytic_tag_ids'][0][2])
-                    invoice_lines[line['category_id']]['subscription_ids'][0][2].extend(line['subscription_ids'][0][2])
+                    invoice_lines[line['category_id']
+                                  ]['discount'] += line['discount']
+                    invoice_lines[line['category_id']
+                                  ]['price_unit'] += line['price_unit']
+                    invoice_lines[line['category_id']]['tax_ids'][0][2].extend(
+                        line['tax_ids'][0][2])
+                    invoice_lines[line['category_id']
+                                  ]['analytic_account_id'] = line['analytic_account_id']
+                    invoice_lines[line['category_id']]['analytic_tag_ids'][0][2].extend(
+                        line['analytic_tag_ids'][0][2])
+                    invoice_lines[line['category_id']]['subscription_ids'][0][2].extend(
+                        line['subscription_ids'][0][2])
         so_lines.write({
             'last_invoiced': today
         })
@@ -855,7 +878,7 @@ class Partner(models.Model):
                 try:
                     customer.with_context(check_invoice_start_date=True).generate_invoice()
                 except Exception as e:
-                    print("-------------")
+                    print("---------Invoice creation issue ----")
             return True
         except Exception as e:
             return False

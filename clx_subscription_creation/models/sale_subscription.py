@@ -118,7 +118,7 @@ class SaleSubscriptionLine(models.Model):
         ('upsell', 'Upsell'),
         ('downsell', 'Downsell')
     ], string='Origin', default='base')
-
+    # ---- potentialy need to be removed. Vlad ----
     management_price = fields.Float(
         related="so_line_id.management_price", string='Management Price')
     wholesale_price = fields.Float(

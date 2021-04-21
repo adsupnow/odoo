@@ -36,29 +36,6 @@ class BudgetReportWizard(models.TransientModel):
                            })
         return result
 
-    def _calculate_wholesale_price(self, subscription_line, price_unit, price_list):
-        wholesale = 0.0
-        if subscription_line and price_unit and price_list:
-            rule = price_list[0].item_ids.filtered(
-                lambda x: x.categ_id.id == subscription_line.product_id.categ_id.id)
-            if rule:
-                percentage_management_price = custom_management_price = 0.0
-                if rule.is_percentage:
-                    percentage_management_price = price_unit * (
-                        (rule.percent_mgmt_price or 0.0) / 100.0)
-                if rule.is_custom and price_unit > rule.min_retail_amount:
-                    custom_management_price = price_unit * (
-                        (rule.percent_mgmt_price or 0.0) / 100.0)
-                management_fees = max(percentage_management_price,
-                                      custom_management_price,
-                                      rule.fixed_mgmt_price)
-                if rule.is_wholesale_percentage:
-                    wholesale = price_unit * (
-                        (rule.percent_wholesale_price or 0.0) / 100.0)
-                if rule.is_wholesale_formula:
-                    wholesale = price_unit - management_fees
-        return wholesale
-
     def get_budget_report(self):
         self._cr.execute("DELETE FROM sale_subscription_report_data")
         report_data_table = self.env['sale.subscription.report.data']
@@ -119,7 +96,7 @@ class BudgetReportWizard(models.TransientModel):
                     result_end_date = slider_start_date.replace(day=monthrange(
                         slider_start_date.year, slider_start_date.month)[1])
                     if sub_line.end_date and sub_line.end_date < result_end_date:
-                        result_end_date = sub_line.end_date 
+                        result_end_date = sub_line.end_date
                     result_table[slider_period][product_stamp] = {
                         'period': slider_period,
                         'start_date': result_start_date,
@@ -343,7 +320,8 @@ class qweb_sale_subscription_budgets_report(models.AbstractModel):
                  'management_fee': subscription.management_fee,
                  'start_date': subscription.start_date,
                  'end_date': subscription.end_date})
-
+            group_sales = self.env['res.groups'].search([('name', '=', 'CLX Sale Group')])
+            fees_allowed = self.env.user.id not in group_sales.users.ids
         docargs = {
             'doc_ids': docids,
             'doc_model': report.model,
@@ -351,6 +329,7 @@ class qweb_sale_subscription_budgets_report(models.AbstractModel):
             'all_periods': all_periods,
             'companies': subscriptions_gouped,
             'get_all': self.get_all,
+            'fees_allowed': fees_allowed,
             # 'print_data': self.print_data,
             # 'get_qty_done_sum': self.get_qty_done_sum,
         }

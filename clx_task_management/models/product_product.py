@@ -7,4 +7,4 @@ from odoo import api, fields, models
 class ProductProduct(models.Model):
     _inherit = 'product.product'
 
-    is_task_create = fields.Boolean(string="Is Task Create?")
+    is_task_create = fields.Boolean(string="Generate Task", default=True)
