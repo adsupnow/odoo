@@ -74,6 +74,9 @@ class SaleSubscriptionWizard(models.TransientModel):
                 })
                 # sol_id.price_unit_change()
                 # so.update_price()
+                so.is_ratio = order_id.is_ratio
+                if order_id.is_ratio:
+                    so.co_op_sale_order_partner_ids = order_id.co_op_sale_order_partner_ids.ids
                 so.action_confirm()
         return res
 

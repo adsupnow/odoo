@@ -49,35 +49,35 @@ class SaleOrder(models.Model):
             co_op_partner_id = co_op.create(vals)
             self.co_op_sale_order_partner_ids = [(6, 0, co_op_partner_id.ids)]
 
-    def action_open_subscriptions(self):
-        res = super(SaleOrder, self).action_open_subscriptions()
-        if self.is_ratio:
-            action = self.env.ref('sale_subscription.sale_subscription_action').read()[0]
-            subscriptions = self.order_line.mapped('clx_subscription_ids')
-            if len(subscriptions) > 1:
-                action['domain'] = [('id', 'in', subscriptions.ids)]
-            elif len(subscriptions) == 1:
-                form_view = [(self.env.ref('sale_subscription.sale_subscription_view_form').id, 'form')]
-                if 'views' in res:
-                    action['views'] = form_view + [(state, view) for state, view in action['views'] if view != 'form']
-                else:
-                    action['views'] = form_view
-                action['res_id'] = subscriptions.ids[0]
-            else:
-                action = {'type': 'ir.actions.act_window_close'}
-            return action
-        return res
+    # def _compute_subscription_count(self):
+    #     for order in self:
+    #         if not order.is_ratio:
+    #             sub_count = len(self.env['sale.order.line'].read_group(
+    #                 [('order_id', '=', order.id), ('subscription_id', '!=', False)],
+    #                 ['subscription_id'], ['subscription_id']))
+    #             order.subscription_count = sub_count
+    #         elif order.is_ratio:
+    #             sub_count = len(order.order_line.mapped('clx_subscription_ids'))
+    #             order.subscription_count = sub_count
 
-    def _compute_subscription_count(self):
-        for order in self:
-            if not order.is_ratio:
-                sub_count = len(self.env['sale.order.line'].read_group(
-                    [('order_id', '=', order.id), ('subscription_id', '!=', False)],
-                    ['subscription_id'], ['subscription_id']))
-                order.subscription_count = sub_count
-            elif order.is_ratio:
-                sub_count = len(order.order_line.mapped('clx_subscription_ids'))
-                order.subscription_count = sub_count
+    # def action_open_subscriptions(self):
+    #     res = super(SaleOrder, self).action_open_subscriptions()
+    #     if self.is_ratio:
+    #         action = self.env.ref('sale_subscription.sale_subscription_action').read()[0]
+    #         subscriptions = self.order_line.mapped('clx_subscription_ids')
+    #         if len(subscriptions) > 1:
+    #             action['domain'] = [('id', 'in', subscriptions.ids)]
+    #         elif len(subscriptions) == 1:
+    #             form_view = [(self.env.ref('sale_subscription.sale_subscription_view_form').id, 'form')]
+    #             if 'views' in res:
+    #                 action['views'] = form_view + [(state, view) for state, view in action['views'] if view != 'form']
+    #             else:
+    #                 action['views'] = form_view
+    #             action['res_id'] = subscriptions.ids[0]
+    #         else:
+    #             action = {'type': 'ir.actions.act_window_close'}
+    #         return action
+    #     return res
 
 
 class SaleOrderLine(models.Model):
