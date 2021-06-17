@@ -6,34 +6,34 @@
         <field name="email_from">${(object.user_id.email_formatted or user.email_formatted) | safe}</field>
         <field name="subject">${object.company_id.name} (Ref *${str(object.id)})</field>
         <field name="reply_to">${object.partner_id.account_user_id.partner_id.email}</field>
-        <field name="model_id" eval="259"/>
+        <field name="model_id" ref="account.model_account_move"/>
         <field name="partner_to"/>
         <!-- 336 - model id for sales.order -->
         <field name="auto_delete" eval="True"/>
         <field name="lang">${object.partner_id.lang}</field>
         <field name="report_name">Invoice_${(object.name or '').replace('/','_')}${object.state == 'draft' and '_draft' or ''}</field>
-        <field name="report_template" eval="268"/>
+        <field name="report_template" ref="account.account_invoices"/>
         <field name="body_html" type="html">
-            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
-                <tr>
-                    <td valign="middle">
-                        % set doc_name = 'Ref: *' + str(object.id)
-                        % set secure_url = object.type_name + ctx.get('secure_url') 
-                        % set email_text = ctx.get('email_text') 
-                        <span style="font-size: 10px;">${doc_name}</span>
-                        <br/>
-                        <span style="font-size: 20px; font-weight: bold;">${(object.type_name+": "+object.name) if object.name != '/'}</span>
-                    </td>
-                    <td valign="middle" align="right">
-                        <img src="/logo.png?company=1" style="padding: 0px; margin: 0px; height: 48px;" alt="company.name"/>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="text-align:center;">
-                        <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
-                    </td>
-                </tr>
-            </table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+    <tr>
+        <td valign="middle">
+% set doc_name = 'Ref: *' + str(object.id)
+% set secure_url = object.type_name + ctx.get('secure_url')
+% set email_text = ctx.get('email_text') ${doc_name}
+            <span style="font-size: 10px;">${doc_name}</span>
+            <br/>
+            <span style="font-size: 20px; font-weight: bold;">${(object.type_name+": "+object.name) if object.name != '/'}</span>
+        </td>
+        <td valign="middle" align="right">
+            <img src="/logo.png?company=1" style="padding: 0px; margin: 0px; height: 48px;" alt="company.name"/>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align:center;">
+            <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+        </td>
+    </tr>
+</table>
 
             <div style="font-size:13px;font-family:&quot;Lucida Grande&quot;, Helvetica, Verdana, Arial, sans-serif;margin:0px;padding: 0px;">
                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: lightgray;border-collapse:separate;background: lightgrey;text-align: center;margin:  0.5cm auto;padding: 0.6cm;"> 
