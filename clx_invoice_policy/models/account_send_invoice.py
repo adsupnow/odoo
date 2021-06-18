@@ -31,7 +31,6 @@ class AccountSendInvoice(models.TransientModel):
 
     def clx_action_send_mail(self):
         prepeared_values = {
-            # 'email_to': self.email_to,
             "body_html": self.body,
             "attachment_ids": self.attachment_ids,
             "recipient_ids": False,  # self.partner_ids,

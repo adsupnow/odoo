@@ -10,7 +10,6 @@
                 <field name="allowed_partner_ids" invisible="1" />
                 <field name="partner_ids" widget="many2many_tags_email" placeholder="Add contacts to notify..." domain="[('id', 'in', allowed_partner_ids)]" options="{'no_create': True}"/>
                 <field name="reply_to" placeholder="Send copy ...   "  invisible="1"/>
-                <field name="email_to" placeholder="Add additional e-mails to notify..." />
             </xpath>
             <!-- Print option will not work  -->
             <xpath expr="//footer/button[@name='send_and_print_action' and contains(@class,'send_and_print')]" position="replace">
