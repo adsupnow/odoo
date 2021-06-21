@@ -42,9 +42,11 @@ class SaleOrder(models.Model):
         template = self.env["mail.template"].sudo().search([("name", "=", "Sales Order: CLX email template")])
         lang = self.env.context.get("lang")
         template_id = template.id
-
+        contacts_billing = []
+        for contact in self.partner_id.contact_child_ids:
+            contacts_billing.append(contact.child_id.id)
         account_manager = self.partner_id.account_user_id.partner_id
-        contacts_billing = [account_manager.id] + self.partner_id.contacts_to_notify(group_name="Billing Contact").mapped("id")
+        contacts_billing.append(account_manager.id)
         if template.lang:
             lang = template._render_template(template.lang, "sale.order", self.ids[0])
         secure_url = self._get_share_url(redirect=True, signup_partner=True)
@@ -95,10 +97,10 @@ class SaleOrder(models.Model):
             "default_use_template": bool(template.id),
             "default_template_id": template.id,
             "default_composition_mode": "comment",
-            # "default_partner_ids": previous_mail_array[0].partner_ids,
-            # "default_email_to": previous_mail_array[0].email_to,
-            # "default_reply_to": previous_mail_array[0].reply_to,
-            # "default_subject": previous_mail_array[0].subject,
+            "default_partner_ids": previous_mail_array[0].partner_ids,
+            "default_email_to": previous_mail_array[0].email_to,
+            "default_reply_to": previous_mail_array[0].reply_to,
+            "default_subject": previous_mail_array[0].subject,
             "mark_so_as_sent": True,
             "custom_layout": "mail.mail_notification_light",
             "proforma": self.env.context.get("proforma", False),
@@ -138,7 +140,6 @@ class SaleOrder(models.Model):
                     "attachment_ids": [attach.id for attach in composer.attachment_ids],
                     "subject": subject,
                     "email_from": email_from,
-                    "reply_to":email_from,
                 }
                 Mail = self.env["mail.mail"].create(prepeared_values)
                 Mail.send()
