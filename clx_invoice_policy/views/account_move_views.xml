@@ -6,9 +6,6 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//form" position="attributes">
-                 <attribute name="create">false</attribute>
-            </xpath>
             <!-- EMAIL BUTTON -->
             <xpath expr="//button[@name='action_invoice_sent']" position="replace">
                     <!-- Send (only invoices) -->
@@ -148,18 +145,4 @@ if records:
     action = records.button_approve_invoice()
             </field>
     </record>
-
-    <act_window
-        name="Send &amp; print"
-        id="account.invoice_send"
-        res_model="account.invoice.send"
-        binding_model="account.move"
-        binding_views="list"
-        view_mode="form"
-        target="new"
-        context="{
-            'default_template_id': ref('clx_invoice_policy.account_move_clx_email_template'),
-            'mark_invoice_as_sent': True,
-        }"
-        groups="account.group_account_invoice"/>
 </odoo>
