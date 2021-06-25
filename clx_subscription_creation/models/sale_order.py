@@ -56,6 +56,8 @@ class SaleOrder(models.Model):
                 {
                     "partner_id": partner_id,
                     "initial_sale_order_id": self,
+                    # "is_co_op": partner_id.co,
+                    # "co_op_percentage": self._context.get("co_op_percentage"),
                     "active": False,
                 }
             )
@@ -109,15 +111,6 @@ class SaleOrder(models.Model):
                 values["initial_sale_order_id"] = self.id
                 values["recurring_invoice_line_ids"] = line._prepare_subscription_line_data()
                 subscription = sale_subscription_obj.create(values)
-                # create corresponding co-op lines if exist
-                if line.is_co_op and len(line.co_op_sale_order_line_partner_ids) > 0:
-                    for coop in line.co_op_sale_order_line_partner_ids:
-                        coop_subscription_record = {
-                            "partner_id": coop.partner_id.id,
-                            "ratio": coop.ratio,
-                            "subscription_id": subscription.id,
-                        }
-                        self.env["co.op.subscription.partner"].create(coop_subscription_record)
                 res.append(subscription.id)
                 subscription.message_post_with_view(
                     "mail.message_origin_link",
