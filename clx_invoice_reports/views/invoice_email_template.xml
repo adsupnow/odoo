@@ -12,21 +12,21 @@
                 <field name="reply_to" placeholder="Send copy ...   "  invisible="1"/>
             </xpath>
             <!-- Print option will not work  -->
-            <xpath expr="//footer/button[@name='send_and_print_action' and contains(@class,'send_and_print')]" position="replace">
-                <button string="Send"
-                        attrs="{'invisible': ['|', ('is_email', '=', False), ('is_print', '=', False)]}"
-                        name="clx_action_send_mail" type="object" class="btn-primary o_mail_send"/>
-            </xpath>
-            <xpath expr="//footer/button[@name='send_and_print_action' and contains(@class,'send')]" position="replace">
-                <button string="Send"
-                        attrs="{'invisible': ['|', ('is_print', '=', True), ('is_email', '=', False)]}"
-                        name="clx_action_send_mail" type="object" class="btn-primary o_mail_send"/>
-            </xpath>
-            <xpath expr="//footer/button[@name='send_and_print_action' and contains(@class,'print')]" position="replace">
-                <button string="Send"
-                        attrs="{'invisible': ['|', ('is_print', '=', False), ('is_email', '=', True)]}"
-                        name="clx_action_send_mail" type="object" class="btn-primary o_mail_send"/>
-            </xpath>
+<!--            <xpath expr="//footer/button[@name='send_and_print_action' and contains(@class,'send_and_print')]" position="replace">-->
+<!--                <button string="Send"-->
+<!--                        attrs="{'invisible': ['|', ('is_email', '=', False), ('is_print', '=', False)]}"-->
+<!--                        name="clx_action_send_mail" type="object" class="btn-primary o_mail_send"/>-->
+<!--            </xpath>-->
+<!--            <xpath expr="//footer/button[@name='send_and_print_action' and contains(@class,'send')]" position="replace">-->
+<!--                <button string="Send"-->
+<!--                        attrs="{'invisible': ['|', ('is_print', '=', True), ('is_email', '=', False)]}"-->
+<!--                        name="clx_action_send_mail" type="object" class="btn-primary o_mail_send"/>-->
+<!--            </xpath>-->
+<!--            <xpath expr="//footer/button[@name='send_and_print_action' and contains(@class,'print')]" position="replace">-->
+<!--                <button string="Send"-->
+<!--                        attrs="{'invisible': ['|', ('is_print', '=', False), ('is_email', '=', True)]}"-->
+<!--                        name="clx_action_send_mail" type="object" class="btn-primary o_mail_send"/>-->
+<!--            </xpath>-->
         </field>
     </record>
 </odoo>
